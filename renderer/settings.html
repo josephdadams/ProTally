@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>ProTally Settings</title>
+      <style>
+          body {
+              background-color: #eeeeee;
+              padding: 5px;
+              -webkit-user-select: none;
+              -webkit-app-region: drag;
+          }
+
+    .divSquare
+    {
+        width:48%;
+        height:100px;
+        margin:4px;
+        border:1px solid black;
+        float: left;
+        justify-content: center;
+        position: relative;
+    }
+    .div2Square
+    {
+        width:97.6%;
+        height:100px;
+        margin:4px;
+        border:1px solid black;
+        float: left;
+        justify-content: center;
+    }
+    
+    .div2SquareContainer
+    {
+        width: 97%;
+        height: 100%;
+        margin: 0 auto;
+        padding: 10px;
+    }
+    
+    .divTallyContainer
+    {
+        width: 48%;
+        height: 100%;
+        margin: 0 auto;
+        padding: 10px;
+    }
+    
+    .buttonResize
+    {
+        width: 100px;
+        height: 40px;
+        background: #27A1CA;
+    }
+
+    .switches
+    {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+    }
+    
+    .tallyInput
+    {
+        position: absolute;
+        left: 10px;
+        top: 25px;
+    }
+    .tallyResize
+    {
+        position: absolute;
+        left: 120px;
+        top: 15px;
+    }
+    
+.onoffswitch {
+    position: relative; width: 130px;
+    -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+}
+.onoffswitch-checkbox {
+    display: none;
+}
+.onoffswitch-label {
+    display: block; overflow: hidden; cursor: pointer;
+    border: 2px solid #E3E3E3; border-radius: 36px;
+}
+.onoffswitch-inner {
+    display: block; width: 200%; margin-left: -100%;
+    transition: margin 0.3s ease-in 0s;
+}
+.onoffswitch-inner:before, .onoffswitch-inner:after {
+    display: block; float: left; width: 50%; height: 21px; padding: 0; line-height: 21px;
+    font-size: 16px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
+    box-sizing: border-box;
+}
+.onoffswitch-inner-border:before {
+    content: "Use Border";
+    padding-left: 10px;
+    background-color: #FFFFFF; color: #000000;
+}
+.onoffswitch-inner-border:after {
+    content: "Use Box";
+    padding-right: 10px;
+    background-color: #FFFFFF; color: #666666;
+    text-align: right;
+}
+.onoffswitch-inner-showlabel:before {
+    content: "Show Label";
+    padding-left: 10px;
+    background-color: #FFFFFF; color: #000000;
+}
+.onoffswitch-inner-showlabel:after {
+    content: "No Label";
+    padding-right: 10px;
+    background-color: #FFFFFF; color: #666666;
+    text-align: right;
+}
+.onoffswitch-switch {
+    display: block; width: 21px; margin: 0px;
+    background: #A1A1A1;
+    position: absolute; top: 0; bottom: 0;
+    right: 106px;
+    border: 2px solid #E3E3E3; border-radius: 36px;
+    transition: all 0.3s ease-in 0s; 
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+    margin-left: 0;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+    right: 0px; 
+    background-color: #27A1CA; 
+}
+
+#divUpdateDeviceSettings
+{
+    position: absolute;
+    left: 235px;
+    top: 45px;    
+}
+
+#btnUpdateDeviceSettings
+{
+    height: 60px;
+    width: 60px;
+    background: #27A1CA;
+}
+
+#UpdateSettings
+{
+    width:97.6%;
+    height:40px;
+    margin:4px;
+    float: left;
+    justify-content: center;
+}
+
+#btnUpdateSettings
+{
+    height: 50px;
+    width: 100px;
+    position: absolute;
+    left: 17px;
+    top: 475px;
+    background: #27A1CA;
+}
+
+#btnClose
+{
+    height: 50px;
+    width: 100px;
+    position: absolute;
+    right: 26px;
+    top: 475px;
+    background: #27A1CA;
+}
+
+#divNotifications
+{
+    width: 450px;
+    height: 100px;
+    overflow-y: scroll;
+    background-color: #dddddd;
+    font-size: 12px;
+    font-family: monospace;
+    position: absolute;
+    right: 30px;
+    top: 25px;
+    -webkit-user-select: text;
+}
+
+.divDisabled
+{
+    opacity: 0.2;
+    pointer-events: none;
+    cursor: default;
+}
+
+.divEnabled
+{
+    opacity: 1;
+    pointer-events: auto;
+    cursor: auto;
+}
+
+.slidercontainer {
+    width: 125px; /* Width of the outside container */
+}
+
+/* The slider itself */
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 15px;
+    border-radius: 5px;   
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%; 
+    background: #A1A1A1;
+    cursor: pointer;
+}
+      </style>
+ <script>
+const ipc = require('electron').ipcRenderer;
+
+const remote = require('electron').remote;
+
+var TallyArray = [];
+var NotificationArray = [];
+
+var DeviceInUse = ""; // the device (Ross Carbonite, Blackmagic ATEM, Generic TSL, etc.) currently being used
+
+var btnUpdateSettings, txtAddress1, txtAddress2, txtAddress3, txtAddress4, btnResizeTallyBox1, btnResizeTallyBox2, btnResizeTallyBox3, btnResizeTallyBox4;
+
+var tallyBoxWindow1_resizeMode = false;
+var tallyBoxWindow2_resizeMode = false;
+var tallyBoxWindow3_resizeMode = false;
+var tallyBoxWindow4_resizeMode = false;
+
+var BlackmagicATEM_TallyFieldAddressLabels = [
+    {address: 0, label: "Black"},
+    {address: 1, label: "Input 1"},
+    {address: 2, label: "Input 2"},
+    {address: 3, label: "Input 3"},
+    {address: 4, label: "Input 4"},
+    {address: 5, label: "Input 5"},
+    {address: 6, label: "Input 6"},
+    {address: 7, label: "Input 7"},
+    {address: 8, label: "Input 8"},
+    {address: 9, label: "Input 9"},
+    {address: 10, label: "Input 10"},
+    {address: 11, label: "Input 11"},
+    {address: 12, label: "Input 12"},
+    {address: 13, label: "Input 13"},
+    {address: 14, label: "Input 14"},
+    {address: 15, label: "Input 15"},
+    {address: 16, label: "Input 16"},
+    {address: 17, label: "Input 17"},
+    {address: 18, label: "Input 18"},
+    {address: 19, label: "Input 19"},
+    {address: 20, label: "Input 20"},
+    {address: 1000, label: "Color Bars"},
+    {address: 2001, label: "Color 1"},
+    {address: 2002, label: "Color 2"},
+    {address: 3010, label: "Media Player 1"},
+    {address: 3011, label: "Media Player 1 Key"},
+    {address: 3020, label: "Media Player 2"},
+    {address: 3021, label: "Media Player 2 Key"},
+    {address: 4010, label: "Key 1 Mask"},
+    {address: 4020, label: "Key 2 Mask"},
+    {address: 4030, label: "Key 3 Mask"},
+    {address: 4040, label: "Key 4 Mask"},
+    {address: 5010, label: "DSK 1 Mask"},
+    {address: 5020, label: "DSK 2 Mask"},
+    {address: 6000, label: "Super Source"},
+    {address: 7001, label: "Clean Feed 1"},
+    {address: 7002, label: "Clean Feed 2"},
+    {address: 8001, label: "Auxilary 1"},
+    {address: 8002, label: "Auxilary 2"},
+    {address: 8003, label: "Auxilary 3"},
+    {address: 8004, label: "Auxilary 4"},
+    {address: 8005, label: "Auxilary 5"},
+    {address: 8006, label: "Auxilary 6"},
+    {address: 10010, label: "ME 1 Prog"},
+    {address: 10011, label: "ME 1 Prev"},
+    {address: 10020, label: "ME 2 Prog"},
+    {address: 10021, label: "ME 2 Prev"}
+];
+
+var RossCarbonite_TallyFieldAddressLabels = [
+    {address: 0, label: "BK, BG, no src"},
+    {address: 1, label: "Input 1"},
+    {address: 2, label: "Input 2"},
+    {address: 3, label: "Input 3"},
+    {address: 4, label: "Input 4"},
+    {address: 5, label: "Input 5"},
+    {address: 6, label: "Input 6"},
+    {address: 7, label: "Input 7"},
+    {address: 8, label: "Input 8"},
+    {address: 9, label: "Input 9"},
+    {address: 10, label: "Input 10"},
+    {address: 11, label: "Input 11"},
+    {address: 12, label: "Input 12"},
+    {address: 13, label: "Input 13"},
+    {address: 14, label: "Input 14"},
+    {address: 15, label: "Input 15"},
+    {address: 16, label: "Input 16"},
+    {address: 17, label: "Input 17"},
+    {address: 18, label: "Input 18"},
+    {address: 19, label: "Input 19"},
+    {address: 20, label: "Input 20"},
+    {address: 21, label: "Input 21"},
+    {address: 22, label: "Input 22"},
+    {address: 23, label: "Input 23"},
+    {address: 24, label: "Input 24"},
+    {address: 25, label: "ME 1 BKGD"},
+    {address: 26, label: "ME 1 PST"},
+    {address: 27, label: "ME 1 Key 1 Video"},
+    {address: 28, label: "ME 1 Key 1 Alpha"},
+    {address: 29, label: "ME 1 Key 2 Video"},
+    {address: 30, label: "ME 1 Key 2 Alpha"},
+    {address: 31, label: "ME 1 Key 3 Video"},
+    {address: 32, label: "ME 1 Key 3 Alpha"},
+    {address: 33, label: "ME 1 Key 4 Video"},
+    {address: 34, label: "ME 1 Key 4 Alpha"},
+    {address: 35, label: "ME 2 BKGD"},
+    {address: 36, label: "ME 2 PST"},
+    {address: 37, label: "ME 2 Key 1 Video"},
+    {address: 38, label: "ME 2 Key 1 Alpha"},
+    {address: 39, label: "ME 2 Key 2 Video"},
+    {address: 40, label: "ME 2 Key 2 Alpha"},
+    {address: 41, label: "ME 2 Key 3 Video"},
+    {address: 42, label: "ME 2 Key 3 Alpha"},
+    {address: 43, label: "ME 2 Key 4 Video"},
+    {address: 44, label: "ME 2 Key 4 Alpha"},
+    {address: 45, label: "ME 3 BKGD"},
+    {address: 46, label: "ME 3 PST"},
+    {address: 47, label: "ME 3 Key 1 Video"},
+    {address: 48, label: "ME 3 Key 1 Alpha"},
+    {address: 49, label: "ME 3 Key 2 Video"},
+    {address: 50, label: "ME 3 Key 2 Alpha"},
+    {address: 55, label: "MultiScreen 1 BKGD"},
+    {address: 56, label: "MultiScreen 1 PST"},
+    {address: 57, label: "MultiScreen 1 Key 1 Video"},
+    {address: 58, label: "MultiScreen 1 Key 2 Video"},
+    {address: 59, label: "MultiScreen 1 Key 2 Alpha"},
+    {address: 60, label: "MultiScreen 2 BKGD"},
+    {address: 61, label: "MultiScreen 2 PST"},
+    {address: 62, label: "MultiScreen 2 Key 1 Video"},
+    {address: 63, label: "MultiScreen 2 Key 2 Video"},
+    {address: 64, label: "MultiScreen 2 Key 2 Alpha"},
+    {address: 65, label: "Aux 1"},
+    {address: 66, label: "Aux 2"},
+    {address: 67, label: "Aux 3"},
+    {address: 68, label: "Aux 4"},
+    {address: 69, label: "Aux 5"},
+    {address: 70, label: "Aux 6"},
+    {address: 71, label: "Aux 7"},
+    {address: 72, label: "Aux 8"},
+    {address: 81, label: "MiniME™ 1 BKGD"},
+    {address: 82, label: "MiniME™ 1 PST"},
+    {address: 83, label: "MiniME™ 1 Key 1 Video"},
+    {address: 84, label: "MiniME™ 1 Key 2 Video"},
+    {address: 85, label: "MiniME™ 1 Key 2 Alpha"},
+    {address: 86, label: "MiniME™ 2 BKGD"},
+    {address: 87, label: "MiniME™ 2 PST"},
+    {address: 88, label: "MiniME™ 2 Key 1 Video"},
+    {address: 89, label: "MiniME™ 2 Key 2 Video"},
+    {address: 90, label: "MiniME™ 2 Key 2 Alpha"},
+    {address: 91, label: "MiniME™ 3 BKGD"},
+    {address: 92, label: "MiniME™ 3 PST"},
+    {address: 93, label: "MiniME™ 3 Key 1 Video"},
+    {address: 94, label: "MiniME™ 3 Key 2 Video"},
+    {address: 95, label: "MiniME™ 3 Key 2 Alpha"},
+    {address: 96, label: "MiniME™ 4 BKGD"},
+    {address: 97, label: "MiniME™ 4 PST"},
+    {address: 98, label: "MiniME™ 4 Key 1 Video"},
+    {address: 99, label: "MiniME™ 4 Key 2 Video"},
+    {address: 100, label: "MiniME™ 4 Key 2 Alpha"},
+    {address: 101, label: "Media-Store 1"},
+    {address: 102, label: "Media-Store 2"},
+    {address: 103, label: "Media-Store 3"},
+    {address: 104, label: "Media-Store 4"},
+    {address: 110, label: "Program"},
+    {address: 111, label: "Preview"},
+    {address: 112, label: "Clean"},
+    {address: 113, label: "ME 1 PGM"},
+    {address: 114, label: "ME 1 PV"},
+    {address: 115, label: "ME 1 Clean"},
+    {address: 116, label: "MiniME™ 1"},
+    {address: 117, label: "MiniME™ 2"},
+    {address: 118, label: "MiniME™ 3"},
+    {address: 119, label: "MiniME™ 4"},
+    {address: 120, label: "ME 2 PGM"},
+    {address: 121, label: "ME 2 PV"},
+    {address: 122, label: "ME 2 Clean"}
+];
+    
+function onLoad()
+{   
+    btnUpdateSettings = document.getElementById('btnUpdateSettings');
+    txtAddress1 = document.getElementById('txtAddress1');
+    txtAddress2 = document.getElementById('txtAddress2');
+    txtAddress3 = document.getElementById('txtAddress3');
+    txtAddress4 = document.getElementById('txtAddress4');
+    
+    spanAddress1_dropdown = document.getElementById('spanAddress1_dropdown');
+    spanAddress2_dropdown = document.getElementById('spanAddress2_dropdown');
+    spanAddress3_dropdown = document.getElementById('spanAddress3_dropdown');
+    spanAddress4_dropdown = document.getElementById('spanAddress4_dropdown');
+    
+    btnResizeTallyBox1 = document.getElementById('btnResizeTallyBox1');
+    btnResizeTallyBox2 = document.getElementById('btnResizeTallyBox2');
+    btnResizeTallyBox3 = document.getElementById('btnResizeTallyBox3');
+    btnResizeTallyBox4 = document.getElementById('btnResizeTallyBox4');
+    
+    document.getElementById("btnClose").addEventListener("click", function (e) {
+        var window = remote.getCurrentWindow();
+        
+        if (tallyBoxWindow1_resizeMode)
+        {
+            ipc.send("SaveWindowPosition", "1");
+        }
+        
+        if (tallyBoxWindow2_resizeMode)
+        {
+            ipc.send("SaveWindowPosition", "2");
+        }
+        
+        if (tallyBoxWindow3_resizeMode)
+        {
+            ipc.send("SaveWindowPosition", "3");
+        }
+        
+        if (tallyBoxWindow4_resizeMode)
+        {
+            ipc.send("SaveWindowPosition", "4");
+        }
+        
+        document.getElementById("btnUpdateSettings").click();
+        
+        window.close();
+    });
+    
+    // Update the current slider value (each time you drag the slider handle)
+    document.getElementById("range1").oninput = function() {
+        ipc.send("UpdateStore-TallyBoxTransparency", "1", this.value);
+    };
+    
+    document.getElementById("range2").oninput = function() {
+        ipc.send("UpdateStore-TallyBoxTransparency", "2", this.value);
+    };
+    
+    document.getElementById("range3").oninput = function() {
+        ipc.send("UpdateStore-TallyBoxTransparency", "3", this.value);
+    };
+    
+    document.getElementById("range4").oninput = function() {
+        ipc.send("UpdateStore-TallyBoxTransparency", "4", this.value);
+    };
+    
+    btnUpdateSettings.addEventListener('click', function (event) {
+        let address1Value = "0";
+        let address2Value = "0";
+        let address3Value = "0";
+        let address4Value = "0";
+        
+        switch(DeviceInUse)
+        {
+            case "RossCarbonite":
+            case "BlackmagicATEM":
+                address1Value = document.getElementById("dropdown1").options[document.getElementById("dropdown1").selectedIndex].value;
+                address2Value = document.getElementById("dropdown2").options[document.getElementById("dropdown2").selectedIndex].value;
+                address3Value = document.getElementById("dropdown3").options[document.getElementById("dropdown3").selectedIndex].value;
+                address4Value = document.getElementById("dropdown4").options[document.getElementById("dropdown4").selectedIndex].value;
+                break;
+            default:
+                let numbers = /^[0-9]+$/;
+
+                if (txtAddress1.value.match(numbers))
+                {
+                    address1Value = txtAddress1.value;
+                }
+
+                if (txtAddress2.value.match(numbers))
+                {
+                    address2Value = txtAddress2.value;
+                }
+
+                if (txtAddress3.value.match(numbers))
+                {
+                    address3Value = txtAddress3.value;
+                }
+
+                if (txtAddress4.value.match(numbers))
+                {
+                    address4Value = txtAddress4.value;
+                }
+                break;
+        }
+        
+        ipc.send('UpdateStore-TallyBoxAddress', "1", address1Value);
+        ipc.send('UpdateStore-TallyBoxAddress', "2", address2Value);
+        ipc.send('UpdateStore-TallyBoxAddress', "3", address3Value);
+        ipc.send('UpdateStore-TallyBoxAddress', "4", address4Value);
+        
+        let colorPreview = document.getElementById("colorPreview").value;
+        let colorProgram = document.getElementById("colorProgram").value;
+        let colorPreviewProgram = document.getElementById("colorPreviewProgram").value;
+        
+        ipc.send("UpdateStore-Color", "Preview", colorPreview);
+        ipc.send("UpdateStore-Color", "Program", colorProgram);
+        ipc.send("UpdateStore-Color", "PreviewProgram", colorPreviewProgram);
+        
+        ipc.send("LoadStore-Addresses");
+    });
+    
+    btnResizeTallyBox1.addEventListener('click', function (event) {
+        if (tallyBoxWindow1_resizeMode)
+        {
+            ipc.send("SaveWindowPosition", "1");
+        }
+        else
+        {
+            ipc.send("ShowResizer", "1");   
+        }
+    });
+    
+    btnResizeTallyBox2.addEventListener('click', function (event) {
+        if (tallyBoxWindow2_resizeMode)
+        {
+            ipc.send("SaveWindowPosition", "2");
+        }
+        else
+        {
+            ipc.send("ShowResizer", "2");   
+        }
+    });
+    
+    btnResizeTallyBox3.addEventListener('click', function (event) {
+        if (tallyBoxWindow3_resizeMode)
+        {
+            ipc.send("SaveWindowPosition", "3");
+        }
+        else
+        {
+            ipc.send("ShowResizer", "3");   
+        }
+    });
+    
+    btnResizeTallyBox4.addEventListener('click', function (event) {
+        if (tallyBoxWindow4_resizeMode)
+        {
+            ipc.send("SaveWindowPosition", "4");
+        }
+        else
+        {
+            ipc.send("ShowResizer", "4");   
+        }
+    });
+    
+    chkBorder1 = document.getElementById('chkBorder1');    
+    chkBorder1.addEventListener('click', function (event) {
+        ipc.send('UpdateStore-Border', "1", chkBorder1.checked);
+    });
+    
+    chkBorder2 = document.getElementById('chkBorder2');    
+    chkBorder2.addEventListener('click', function (event) {
+        ipc.send('UpdateStore-Border', "2", chkBorder2.checked);
+    });
+    
+    chkBorder3 = document.getElementById('chkBorder3');    
+    chkBorder3.addEventListener('click', function (event) {
+        ipc.send('UpdateStore-Border', "3", chkBorder3.checked);
+    });
+    
+    chkBorder4 = document.getElementById('chkBorder4');    
+    chkBorder4.addEventListener('click', function (event) {
+        ipc.send('UpdateStore-Border', "4", chkBorder4.checked);
+    });
+    
+    chkShowLabel1 = document.getElementById('chkShowLabel1');    
+    chkShowLabel1.addEventListener('click', function (event) {
+        ipc.send('UpdateStore-ShowLabel', "1", chkShowLabel1.checked);
+    });
+    
+    chkShowLabel2 = document.getElementById('chkShowLabel2');    
+    chkShowLabel2.addEventListener('click', function (event) {
+        ipc.send('UpdateStore-ShowLabel', "2", chkShowLabel2.checked);
+    });
+    
+    chkShowLabel3 = document.getElementById('chkShowLabel3');    
+    chkShowLabel3.addEventListener('click', function (event) {
+        ipc.send('UpdateStore-ShowLabel', "3", chkShowLabel3.checked);
+    });
+    
+    chkShowLabel4 = document.getElementById('chkShowLabel4');    
+    chkShowLabel4.addEventListener('click', function (event) {
+        ipc.send('UpdateStore-ShowLabel', "4", chkShowLabel4.checked);
+    });
+    
+    function useGenericTallyFieldAddresses()
+    {
+        txtAddress1.value = document.getElementById("dropdown1").options[document.getElementById("dropdown1").selectedIndex].value;
+        txtAddress2.value = document.getElementById("dropdown2").options[document.getElementById("dropdown2").selectedIndex].value;
+        txtAddress3.value = document.getElementById("dropdown3").options[document.getElementById("dropdown3").selectedIndex].value;
+        txtAddress4.value = document.getElementById("dropdown4").options[document.getElementById("dropdown4").selectedIndex].value;
+
+        spanAddress1_dropdown.innerHTML = "";
+        spanAddress2_dropdown.innerHTML = "";
+        spanAddress3_dropdown.innerHTML = "";
+        spanAddress4_dropdown.innerHTML = "";
+
+        txtAddress1.style.display = 'inline';
+        txtAddress2.style.display = 'inline';
+        txtAddress3.style.display = 'inline';
+        txtAddress4.style.display = 'inline';
+    }
+    
+    function useSpecificTallyFieldAddressLabels(deviceType)
+    {        
+        let deviceAddressLabels = [];
+        
+        switch(deviceType)
+        {
+            case "RossCarbonite":
+                deviceAddressLabels = RossCarbonite_TallyFieldAddressLabels;
+                break;
+            case "BlackmagicATEM":
+                deviceAddressLabels = BlackmagicATEM_TallyFieldAddressLabels;
+                break;
+            default:
+                break;
+        }
+        
+        let selectEl1 = document.createElement("select");
+        let selectEl2 = document.createElement("select");
+        let selectEl3 = document.createElement("select");
+        let selectEl4 = document.createElement("select");
+
+        selectEl1.id = "dropdown1";
+        selectEl2.id = "dropdown2";
+        selectEl3.id = "dropdown3";
+        selectEl4.id = "dropdown4";
+
+        for (let i = 0; i < deviceAddressLabels.length; i++)
+        {
+            let optionEl = document.createElement("option");
+            optionEl.value = deviceAddressLabels[i].address;
+            let labelText = deviceAddressLabels[i].label;
+            let tallyObj = TallyArray.find(function (obj) { return obj.address === deviceAddressLabels[i].address; });
+            if (tallyObj)
+            {
+                labelText += " (" + tallyObj.label.trim() + ")";
+            }
+            optionEl.text = labelText;
+            if (optionEl.value.toString() === txtAddress1.value.toString())
+            {
+                optionEl.selected = true;
+            }
+            selectEl1.add(optionEl);
+        }
+            
+        for (let i = 0; i < deviceAddressLabels.length; i++)
+        {
+            let optionEl = document.createElement("option");
+            optionEl.value = deviceAddressLabels[i].address;
+            let labelText = deviceAddressLabels[i].label;
+            let tallyObj = TallyArray.find(function (obj) { return obj.address === deviceAddressLabels[i].address; });
+            if (tallyObj)
+            {
+                labelText += " (" + tallyObj.label.trim() + ")";
+            }
+            optionEl.text = labelText;
+            if (optionEl.value.toString() === txtAddress2.value.toString())
+            {
+                optionEl.selected = true;
+            }
+            selectEl2.add(optionEl);
+        }
+            
+        for (let i = 0; i < deviceAddressLabels.length; i++)
+        {
+            let optionEl = document.createElement("option");
+            optionEl.value = deviceAddressLabels[i].address;
+            let labelText = deviceAddressLabels[i].label;
+            let tallyObj = TallyArray.find(function (obj) { return obj.address === deviceAddressLabels[i].address; });
+            if (tallyObj)
+            {
+                labelText += " (" + tallyObj.label.trim() + ")";
+            }
+            optionEl.text = labelText;
+            if (optionEl.value.toString() === txtAddress3.value.toString())
+            {
+                optionEl.selected = true;
+            }
+            selectEl3.add(optionEl);
+        }
+            
+        for (let i = 0; i < deviceAddressLabels.length; i++)
+        {
+            let optionEl = document.createElement("option");
+            optionEl.value = deviceAddressLabels[i].address;
+            let labelText = deviceAddressLabels[i].label;
+            let tallyObj = TallyArray.find(function (obj) { return obj.address === deviceAddressLabels[i].address; });
+            if (tallyObj)
+            {
+                labelText += " (" + tallyObj.label.trim() + ")";
+            }
+            optionEl.text = labelText;
+            if (optionEl.value.toString() === txtAddress4.value.toString())
+            {
+                optionEl.selected = true;
+            }
+            selectEl4.add(optionEl);
+        }
+
+        txtAddress1.style.display = 'none';
+        txtAddress2.style.display = 'none';
+        txtAddress3.style.display = 'none';
+        txtAddress4.style.display = 'none';
+
+        selectEl1.style.display = 'inline';
+        selectEl2.style.display = 'inline';
+        selectEl3.style.display = 'inline';
+        selectEl4.style.display = 'inline';
+
+        selectEl1.style.width = "50px";
+        selectEl2.style.width = "50px";
+        selectEl3.style.width = "50px";
+        selectEl4.style.width = "50px";
+
+        spanAddress1_dropdown.innerHTML = "";
+        spanAddress1_dropdown.appendChild(selectEl1);
+
+        spanAddress2_dropdown.innerHTML = "";
+        spanAddress2_dropdown.appendChild(selectEl2);
+
+        spanAddress3_dropdown.innerHTML = "";
+        spanAddress3_dropdown.appendChild(selectEl3);
+
+        spanAddress4_dropdown.innerHTML = "";
+        spanAddress4_dropdown.appendChild(selectEl4);
+    }
+        
+    let ddlDevices = document.getElementById("ddlDevices");
+    ddlDevices.addEventListener("change", function (event) {
+        let deviceSelected = ddlDevices.options[ddlDevices.selectedIndex].value;
+        
+        document.getElementById("divDeviceSettings_RossCarbonite").style.display = 'none';
+        document.getElementById("divDeviceSettings_TSL31").style.display = 'none';
+        document.getElementById("divDeviceSettings_BlackmagicATEM").style.display = 'none';        
+        
+        switch (deviceSelected)
+        {
+            case "RossCarbonite":
+                document.getElementById("divDeviceSettings_RossCarbonite").style.display = 'inline';
+                document.getElementById("divDeviceSettings_TSL31").style.display = 'inline';
+                useSpecificTallyFieldAddressLabels(deviceSelected);
+                break;
+            case "TSL3.1":
+                document.getElementById("divDeviceSettings_TSL31").style.display = 'inline';
+                useGenericTallyFieldAddresses();
+                break;
+            case "BlackmagicATEM":
+                document.getElementById("divDeviceSettings_BlackmagicATEM").style.display = 'inline';
+                useSpecificTallyFieldAddressLabels(deviceSelected);
+                break;
+            default:
+                break;
+        }
+        
+        document.getElementById("btnUpdateDeviceSettings").style.backgroundColor = "#27A1CA";
+        document.getElementById("btnUpdateDeviceSettings").innerHTML = "Update Device Settings";
+    });
+    
+          
+    let btnUpdateDeviceSettings = document.getElementById('btnUpdateDeviceSettings'); 
+    btnUpdateDeviceSettings.addEventListener('click', function (event) {        
+        let deviceInUse = ddlDevices.options[ddlDevices.selectedIndex].value;
+                
+        let tslListenPort = document.getElementById("txtTSLListenPort").value;
+        let rdoTSLProtocol_TCP = document.getElementById("rdoTSLProtocol_TCP");
+        let rdoTSLProtocol_UDP = document.getElementById("rdoTSLProtocol_UDP");
+        
+        let tslProtocol = "TCP";
+        
+        if (rdoTSLProtocol_UDP.checked)
+        {
+            tslProtocol = "UDP";
+        }
+        
+        switch(deviceInUse)
+        {
+            case "RossCarbonite":
+                ipc.send("UpdateStore-TSLSettings", tslListenPort, tslProtocol);
+                ipc.send("UpdateStore-DeviceInUse", deviceInUse);
+                DeviceInUse = deviceInUse;
+                break;
+            case "TSL3.1":
+                ipc.send("UpdateStore-TSLSettings", tslListenPort, tslProtocol);
+                ipc.send("UpdateStore-DeviceInUse", deviceInUse);
+                DeviceInUse = deviceInUse;
+            case "BlackmagicATEM":
+                let BlackmagicATEMip = document.getElementById("txtBlackmagicATEMip").value;
+                let BlackmagicATEMport = document.getElementById("txtBlackmagicATEMport").value;
+                
+                if (!ValidateIPaddress(BlackmagicATEMip))
+                {
+                    BlackmagicATEMip = "0.0.0.0";
+                }
+                else
+                {
+                    ipc.send("UpdateStore-BlackmagicATEMinfo", BlackmagicATEMip, BlackmagicATEMport);
+                    ipc.send("UpdateStore-DeviceInUse", deviceInUse);
+                    DeviceInUse = deviceInUse;
+                }
+                break;
+            default:
+                break;
+        }
+        
+        if (ddlDevices.selectedIndex > 0)
+        {
+            document.getElementById("tallySettings1").classList.add("divEnabled");
+            document.getElementById("tallySettings2").classList.add("divEnabled");
+            document.getElementById("tallySettings3").classList.add("divEnabled");
+            document.getElementById("tallySettings4").classList.add("divEnabled");
+            document.getElementById("OtherSettings").classList.add("divEnabled");
+            document.getElementById("btnUpdateSettings").classList.add("divEnabled");
+            btnUpdateDeviceSettings.style.backgroundColor = "#00cc00";
+            btnUpdateDeviceSettings.innerHTML = "Listening for data";
+        }
+    });
+
+    //IPCs    
+    ipc.on('TallyBox-Address', function (event, addressNumber, addressValue) {
+        document.getElementById('txtAddress' + addressNumber).value = addressValue;
+        
+        switch(DeviceInUse)
+        {
+            case "RossCarbonite":
+            case "BlackmagicATEM":
+                assignTallyBoxDropDownValues(addressNumber, addressValue);       
+                break;
+            default:
+                break;
+        }
+    });
+    
+    ipc.on('TallyBox-Border', function (event, tallyBoxWindowNumber, borderValue) {
+        if (borderValue)
+        {
+            document.getElementById('chkBorder' + tallyBoxWindowNumber).checked = true;
+        }
+        else
+        {
+            document.getElementById('chkBorder' + tallyBoxWindowNumber).checked = false;
+        }
+    });
+    
+    ipc.on('TallyBox-ShowLabel', function (event, tallyBoxWindowNumber, showLabelValue) {
+        if (showLabelValue)
+        {
+            document.getElementById('chkShowLabel' + tallyBoxWindowNumber).checked = true;
+        }
+        else
+        {
+            document.getElementById('chkShowLabel' + tallyBoxWindowNumber).checked = false;
+        }
+    });
+    
+    ipc.on('TallyBox-Transparency', function (event, tallyBoxWindowNumber, transparencyValue) {
+       transparencyValue = parseInt(transparencyValue);
+       
+       if (transparencyValue === NaN)
+       {
+           transparencyValue = 100;
+       }
+        
+        switch(tallyBoxWindowNumber)
+        {
+            case "1":
+                document.getElementById("range1").value = transparencyValue;
+                break;
+            case "2":
+                document.getElementById("range2").value = transparencyValue;
+                break;
+            case "3":
+                document.getElementById("range3").value = transparencyValue;
+                break;
+            case "4":
+                document.getElementById("range4").value = transparencyValue;
+                break;
+            default:
+                break;
+        }
+    });
+    
+    ipc.on('TallyBox-Color', function (event, mode, color) {
+        switch(mode)
+        {
+            case "Preview":
+                if (!color)
+                {
+                    color = "#00FF00";
+                }                    
+                document.getElementById("colorPreview").value = color;
+                break;
+            case "Program":
+                if (!color)
+                {
+                    color = "#FF0000";
+                }      
+                document.getElementById("colorProgram").value = color;
+                break;
+            case "PreviewProgram":
+                if (!color)
+                {
+                    color = "#FFCC00";
+                }      
+                document.getElementById("colorPreviewProgram").value = color;
+                break;
+            default:
+                break;
+        }
+    });
+    
+    ipc.on('TallyBox-ResizeMode', function (event, tallyBoxWindowNumber, resizeMode) {
+        let btn = document.getElementById("btnResizeTallyBox" + tallyBoxWindowNumber);
+        if (resizeMode)
+        {
+            btn.innerHTML = "Save Window Position";
+        }
+        else
+        {
+            btn.innerHTML = "Resize/Move";
+        }
+        
+        switch(tallyBoxWindowNumber)
+        {
+            case "1":
+                tallyBoxWindow1_resizeMode = resizeMode;
+                break;
+            case "2":
+                tallyBoxWindow2_resizeMode = resizeMode;
+                break;
+            case "3":
+                tallyBoxWindow3_resizeMode = resizeMode;
+                break;
+            case "4":
+                tallyBoxWindow4_resizeMode = resizeMode;
+                break;
+            default:
+                break;
+        }
+    });
+    
+    ipc.on('DeviceInUse', function (event, deviceInUse) {
+        document.getElementById("divDeviceSettings_RossCarbonite").style.display = 'none';
+        document.getElementById("divDeviceSettings_TSL31").style.display = 'none';
+        document.getElementById("divDeviceSettings_BlackmagicATEM").style.display = 'none';
+        
+        ddlDevices.selectedIndex = 0;
+        for(let i = 0; i < ddlDevices.options.length; i++)
+        {
+            if (ddlDevices.options[i].value === deviceInUse)
+            {
+                ddlDevices.selectedIndex = i;
+                break;
+            }
+        }
+        
+        if (ddlDevices.selectedIndex > 0)
+        {
+            document.getElementById("tallySettings1").classList.add("divEnabled");
+            document.getElementById("tallySettings2").classList.add("divEnabled");
+            document.getElementById("tallySettings3").classList.add("divEnabled");
+            document.getElementById("tallySettings4").classList.add("divEnabled");
+            document.getElementById("OtherSettings").classList.add("divEnabled");
+            document.getElementById("btnUpdateSettings").classList.add("divEnabled");
+        }
+                     
+        switch(deviceInUse)
+        {
+            case "RossCarbonite":
+                document.getElementById("divDeviceSettings_RossCarbonite").style.display = 'inline';
+                document.getElementById("divDeviceSettings_TSL31").style.display = 'inline';
+                ipc.send("LoadStore-TSLinfo");
+                useSpecificTallyFieldAddressLabels(deviceInUse);
+                document.getElementById("btnUpdateDeviceSettings").style.backgroundColor = "#00cc00";
+                document.getElementById("btnUpdateDeviceSettings").innerHTML = "Listening for data";
+                break;
+            case "TSL3.1":
+                document.getElementById("divDeviceSettings_TSL31").style.display = 'inline';
+                ipc.send("LoadStore-TSLinfo");
+                document.getElementById("btnUpdateDeviceSettings").style.backgroundColor = "#00cc00";
+                document.getElementById("btnUpdateDeviceSettings").innerHTML = "Listening for data";
+                break;
+            case "ATEM":
+                document.getElementById("divDeviceSettings_BlackmagicATEM").style.display = 'inline';
+                ipc.send("LoadStore-BlackmagicATEMinfo");
+                useSpecificTallyFieldAddressLabels(deviceInUse);
+                break;
+            default:
+                ddlDevices.selectedIndex = 0;
+                break;
+        }
+        
+        DeviceInUse = deviceInUse;
+    });
+    
+    ipc.on("TSLinfo", function (event, TSLListenPort, defaultTSLListenPort, TSLProtocol) {
+        let txtTSLListenPort = document.getElementById("txtTSLListenPort");
+        let rdoTSLProtocol_TCP = document.getElementById("rdoTSLProtocol_TCP");
+        let rdoTSLProtocol_UDP = document.getElementById("rdoTSLProtocol_UDP");
+        
+        if (TSLListenPort)
+        {
+            txtTSLListenPort.value = TSLListenPort;
+        }
+        else
+        {
+            txtTSLListenPort.value = defaultTSLListenPort;
+        }
+        
+        if (!TSLProtocol)
+        {
+            TSLProtocol = "TCP";
+        }
+        
+        switch (TSLProtocol)
+        {
+            case "TCP":
+                rdoTSLProtocol_TCP.checked = true;
+                break;
+            case "UDP":
+                rdoTSLProtocol_UDP.checked = true;
+                break;
+            default:
+                break;
+        }
+    });
+    
+    ipc.on("TSLProtocol", function (event, protocol) {
+        let rdoProtocol_TCP = document.getElementById("rdoTSLProtocol_TCP");
+        let rdoProtocol_UDP = document.getElementById("rdoTSLProtocol_UDP");
+        
+        if (!protocol)
+        {
+            protocol = "TCP";
+        }
+
+        switch(protocol)
+        {
+            case "TCP":
+                rdoProtocol_TCP.checked = true;
+                break;
+            case "UDP":
+                rdoProtocol_UDP.checked = true;
+                break;
+            default:
+                break;
+        }
+    });
+    
+    ipc.on("BlackmagicATEMinfo", function (event, ATEMip, ATEMport, ATEMdefaultport) {
+        let txtBlackmagicATEMip = document.getElementById("txtBlackmagicATEMip");
+        let txtBlackmagicATEMport = document.getElementById("txtBlackmagicATEMport");
+        
+        if (ATEMip)
+        {
+            txtBlackmagicATEMip.value = ATEMip;
+        }
+        else
+        {
+            txtBlackmagicATEMip.value = "0.0.0.0";
+        }
+        
+        if (ATEMport)
+        {
+            txtBlackmagicATEMport.value = ATEMport;
+        }
+        else
+        {
+            txtBlackmagicATEMport.value = ATEMdefaultport;
+        }
+    });
+    
+    ipc.on('TallyArray', function (event, tallyArray) {
+       TallyArray = tallyArray;
+    });
+    
+    ipc.on('NotificationArray', function (event, notificationArray) {
+       NotificationArray = notificationArray;
+       
+       let divNotifications = document.getElementById("divNotifications");
+       divNotifications.innerHTML = "";
+       
+       for (let i = 0; i < NotificationArray.length; i++)
+       {
+           let msgDateTime = new Date(NotificationArray[i].datetime);
+           let msgDateTimeString = "";
+           
+            msgDateTimeString += (msgDateTime.getMonth()+1) + "/" + msgDateTime.getDate() + "/" + msgDateTime.getFullYear();
+	    msgDateTimeString += " " + ((msgDateTime.getHours() + 11) % 12 + 1) + ":";
+            msgDateTimeString += (10 > msgDateTime.getMinutes() ? "0" : "") + msgDateTime.getMinutes() + ":";
+	    msgDateTimeString += (10 > msgDateTime.getSeconds() ? "0" : "") + msgDateTime.getSeconds() + " ";
+	    msgDateTimeString += msgDateTime.getHours() >= 12 ? "PM" : "AM";
+                                    
+           divNotifications.innerHTML += msgDateTimeString + " : " + NotificationArray[i].message + "<br />";
+           console.log(NotificationArray[i].message);
+       }
+       
+       divNotifications.scrollTop = divNotifications.scrollHeight;
+    });
+
+    ipc.send('LoadStore-Addresses');
+    ipc.send('LoadStore-Borders');
+    ipc.send('LoadStore-ShowLabels');
+    ipc.send('LoadStore-TransparencyValues');
+    ipc.send('LoadStore-Colors');
+    ipc.send('LoadStore-ResizeModes');
+    ipc.send('LoadStore-DeviceInUse');
+    ipc.send('LoadStore-NotificationArray');
+}
+
+function assignTallyBoxDropDownValues(addressNumber, addressValue)
+{
+    //dropdown1
+    let dropdown = document.getElementById("dropdown" + addressNumber);
+    
+    for (let i = 0; i < dropdown.options.length; i++)
+    {
+        if (dropdown.options[i].value === addressValue)
+        {
+            dropdown.selectedIndex = i;
+            break;
+        }
+    }
+}
+
+function ValidateIPaddress(ipaddress)
+{  
+    if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress))
+    {  
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+    </script>
+    </head>
+<body onLoad="onLoad();">
+    <div id="container">
+        <div id="divTallySettings">
+            <div id="divDeviceSettings" class="div2Square" style="height: 120px;">
+                <div class="div2SquareContainer">
+                    <b>Device:</b><br />
+                    <select id="ddlDevices">
+                        <option selected value="">(select a device type)</option>
+                        <option value="RossCarbonite">Ross Carbonite</option>
+                        <option value="TSL3.1">Generic TSL 3.1 Device</option>
+                        <!--<option value="BlackmagicATEM">Blackmagic ATEM</option>-->
+                    </select><br /><br />
+                    <div id="divDeviceSettings_RossCarbonite" style="display:none;">
+                    </div>
+                    <div id="divDeviceSettings_TSL31" style="display:none;">
+                        Listen Port: <input type="text" id="txtTSLListenPort" size="5" /><br />
+                        Protocol: <input type="radio" id="rdoTSLProtocol_TCP" name="rdoTSLProtocol" />TCP <input type="radio" id="rdoTSLProtocol_UDP" name="rdoTSLProtocol" />UDP
+                    </div>
+                    <div id="divDeviceSettings_BlackmagicATEM" style="display:none;">
+                        IP Address: <input type="text" id="txtBlackmagicATEMip" size="15" /><br />
+                        <input type="text" id="txtBlackmagicATEMport" style="display:none;" size="5" />
+                    </div>
+                    <div id="divUpdateDeviceSettings">
+                        <button id="btnUpdateDeviceSettings">Update Device Settings</button>
+                    </div>
+                    <div id="divNotifications"></div>
+                </div>
+            </div>
+            <div style='clear:both'></div>
+            <div id="tallySettings1" class="divSquare divDisabled">
+                <div id="tallyContainer1" class="divTallyContainer">
+                    <div class="tallyInput">
+                        Tally 1: 
+                        <input type="text" id="txtAddress1" size="5" />
+                        <span id="spanAddress1_dropdown"></span>
+                    </div>
+                    <div class="tallyResize">
+                        <button id="btnResizeTallyBox1" class="buttonResize">Resize/Move</button>
+                    </div>
+                    <div class="switches">
+                        <div class="onoffswitch">
+                            <input type="checkbox" class="onoffswitch-checkbox" id="chkBorder1" checked>
+                            <label class="onoffswitch-label" for="chkBorder1">
+                                <span class="onoffswitch-inner onoffswitch-inner-border"></span>
+                                <span class="onoffswitch-switch"></span>
+                            </label>
+                        </div>
+                        <div class="onoffswitch">
+                            <input type="checkbox" class="onoffswitch-checkbox" id="chkShowLabel1" checked>
+                            <label class="onoffswitch-label" for="chkShowLabel1">
+                                <span class="onoffswitch-inner onoffswitch-inner-showlabel"></span>
+                                <span class="onoffswitch-switch"></span>
+                            </label>
+                        </div>
+                        <div class="slidercontainer">
+                            <span style="position: absolute; top: 50px; right: 30px;">Tally Opacity</span>
+                            <input type="range" min="1" max="100" value="100" class="slider" id="range1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="tallySettings2" class="divSquare divDisabled">
+               <div id="tallyContainer2" class="divTallyContainer">
+                    <div class="tallyInput">
+                        Tally 2: 
+                        <input type="text" id="txtAddress2" size="5" />
+                        <span id="spanAddress2_dropdown"></span>
+                    </div>
+                    <div class="tallyResize">
+                        <button id="btnResizeTallyBox2" class="buttonResize">Resize/Move</button>
+                    </div>
+                    <div class="switches">
+                        <div class="onoffswitch">
+                            <input type="checkbox" class="onoffswitch-checkbox" id="chkBorder2" checked>
+                            <label class="onoffswitch-label" for="chkBorder2">
+                                <span class="onoffswitch-inner onoffswitch-inner-border"></span>
+                                <span class="onoffswitch-switch"></span>
+                            </label>
+                        </div>
+                        <div class="onoffswitch">
+                            <input type="checkbox" class="onoffswitch-checkbox" id="chkShowLabel2" checked>
+                            <label class="onoffswitch-label" for="chkShowLabel2">
+                                <span class="onoffswitch-inner onoffswitch-inner-showlabel"></span>
+                                <span class="onoffswitch-switch"></span>
+                            </label>
+                        </div>
+                        <div class="slidercontainer">
+                            <span style="position: absolute; top: 50px; right: 30px;">Tally Opacity</span>
+                            <input type="range" min="1" max="100" value="100" class="slider" id="range2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="tallySettings3" class="divSquare divDisabled">
+               <div id="tallyContainer3" class="divTallyContainer">
+                    <div class="tallyInput">
+                        Tally 3: 
+                        <input type="text" id="txtAddress3" size="5" />
+                        <span id="spanAddress3_dropdown"></span>
+                    </div>
+                    <div class="tallyResize">
+                        <button id="btnResizeTallyBox3" class="buttonResize">Resize/Move</button>
+                    </div>
+                    <div class="switches">
+                        <div class="onoffswitch">
+                            <input type="checkbox" class="onoffswitch-checkbox" id="chkBorder3" checked>
+                            <label class="onoffswitch-label" for="chkBorder3">
+                                <span class="onoffswitch-inner onoffswitch-inner-border"></span>
+                                <span class="onoffswitch-switch"></span>
+                            </label>
+                        </div>
+                        <div class="onoffswitch">
+                            <input type="checkbox" class="onoffswitch-checkbox" id="chkShowLabel3" checked>
+                            <label class="onoffswitch-label" for="chkShowLabel3">
+                                <span class="onoffswitch-inner onoffswitch-inner-showlabel"></span>
+                                <span class="onoffswitch-switch"></span>
+                            </label>
+                        </div>
+                        <div class="slidercontainer">
+                            <span style="position: absolute; top: 50px; right: 30px;">Tally Opacity</span>
+                            <input type="range" min="1" max="100" value="100" class="slider" id="range3">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="tallySettings4" class="divSquare divDisabled">
+               <div id="tallyContainer4" class="divTallyContainer">
+                    <div class="tallyInput">
+                        Tally 4: 
+                        <input type="text" id="txtAddress4" size="5" />
+                        <span id="spanAddress4_dropdown"></span>
+                    </div>
+                    <div class="tallyResize">
+                        <button id="btnResizeTallyBox4" class="buttonResize">Resize/Move</button>
+                    </div>
+                    <div class="switches">
+                        <div class="onoffswitch">
+                            <input type="checkbox" class="onoffswitch-checkbox" id="chkBorder4" checked>
+                            <label class="onoffswitch-label" for="chkBorder4">
+                                <span class="onoffswitch-inner onoffswitch-inner-border"></span>
+                                <span class="onoffswitch-switch"></span>
+                            </label>
+                        </div>
+                        <div class="onoffswitch">
+                            <input type="checkbox" class="onoffswitch-checkbox" id="chkShowLabel4" checked>
+                            <label class="onoffswitch-label" for="chkShowLabel4">
+                                <span class="onoffswitch-inner onoffswitch-inner-showlabel"></span>
+                                <span class="onoffswitch-switch"></span>
+                            </label>
+                        </div>
+                        <div class="slidercontainer">
+                            <span style="position: absolute; top: 50px; right: 30px;">Tally Opacity</span>
+                            <input type="range" min="1" max="100" value="100" class="slider" id="range4">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style='clear:both'></div>
+            <div id="OtherSettings" class="div2Square divDisabled">
+                <div class="div2SquareContainer">
+                    <input type="color" id="colorPreview" /><label for="colorPreview">Tally 1: Preview (PVW) Color</label><br />
+                    <input type="color" id="colorProgram" /><label for="colorProgram">Tally 2: Program (PGM) Color</label><br />
+                    <input type="color" id="colorPreviewProgram" /><label for="colorPreviewProgram"> Preview + Program (PVW+PGM) Color</label><br />
+                </div>
+            </div>
+            <div id="UpdateSettings">
+                <div class="div2SquareContainer">
+                    <button id="btnUpdateSettings" class="divDisabled">Update Tally Settings</button>
+                    <button id="btnClose">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+  </html>

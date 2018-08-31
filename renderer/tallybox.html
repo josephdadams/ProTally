@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>ProTally Settings</title>
+      <style>
+        html, body
+        {
+            height: 100%;
+            width: 100%;
+            background: rgba(0, 0, 0, 0);
+            margin: 0px;
+            padding: 0px;
+            font-family: Arial, sans-serif;
+        }
+
+        body
+        {
+            overflow:hidden;
+        }
+        
+        .normalBackground
+        {
+            background: rgba(0, 0, 0, 0);
+        }
+        
+        .resizerBackground
+        {
+            background: rgba(255, 255, 255, 0.5);
+            -webkit-user-select: none;
+            -webkit-app-region: drag;
+        }
+          
+        #tallybox
+        {
+            border: #000000 5px solid;
+            text-align: center;
+            height: 100%;
+            width: 95%;
+            display: table;
+        }
+        
+        .tallybox-box
+        {
+            text-align: center;
+            height: 100%;
+            width: 100%;
+            display: table;
+            justify-content: center;  
+            transition: all 500ms ease;
+        }
+        
+        .tallybox-border
+        {
+            text-align: center;
+            height: 100%;
+            width: 100%;
+            display: table;        
+            transition: all 500ms ease;
+            
+        }
+        
+        #tallyBoxLabel
+        {
+            height: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 15px;
+            top: 5px;
+        }
+        
+        .tallyBoxLabel-top
+        {
+            height: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 15px;
+            top: 5px;
+        }
+        
+        .tallyBoxLabel-middle
+        {
+            height: 100%;
+            width: 100%;
+            align-self: center;
+            font-size: 35px;
+            position: absolute;
+            top: 50%;
+        }
+        
+        #resizer
+        {
+            display: none;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            position: relative;
+        }
+        
+        #resizer-middle
+        {
+            align-self: center;
+        }
+        
+        #resizer-topleft
+        {
+            left: 0;
+            top: 0;
+            position: absolute;
+        }
+        
+        #resizer-topright
+        {
+            right: 0;
+            top: 0;
+            position: absolute;
+        }
+        
+        #resizer-bottomright
+        {
+            right: 0;
+            bottom: 0;
+            position: absolute;
+        }
+        
+        #resizer-bottomleft
+        {
+            left: 0;
+            bottom: 0;
+            position: absolute;
+           
+        }
+        
+        .arrow {
+          display: inline-block;
+          width: 15px;
+          height: 15px;
+          border-top: 2px solid #000;
+          border-right: 2px solid #000;
+        }
+        
+        .arrow-top-left {
+          animation: top-left 1s ease-in-out infinite;
+        }
+        
+        .arrow-top-right {
+          animation: top-right 1s ease-in-out infinite;
+        }
+        
+        .arrow-bottom-right {
+          animation: bottom-right 1s ease-in-out infinite;
+        }
+        
+        .arrow-bottom-left {
+          animation: bottom-left 1s ease-in-out infinite;
+        }
+        
+        @keyframes top-left
+        {
+            0%,
+            100%
+            {
+              transform: translate(0, 0) rotate(-90deg) skew(-10deg, -10deg);
+            }
+
+            50%
+            {
+              transform: translate(10px, 10px) rotate(-90deg) skew(-10deg, -10deg);
+            }
+        }
+        
+        @keyframes top-right
+        {
+            0%,
+            100%
+            {
+              transform: translate(0, 0) rotate(0deg) skew(-10deg, -10deg);
+            }
+
+            50%
+            {
+              transform: translate(-10px, 10px) rotate(0deg) skew(-10deg, -10deg);
+            }
+        }
+        
+        @keyframes bottom-right
+        {
+            0%,
+            100%
+            {
+              transform: translate(0, 0) rotate(90deg) skew(-10deg, -10deg);
+            }
+
+            50%
+            {
+              transform: translate(-10px, -10px) rotate(90deg) skew(-10deg, -10deg);
+            }
+        }
+        
+        @keyframes bottom-left
+        {
+            0%,
+            100%
+            {
+              transform: translate(0, 0) rotate(180deg) skew(-10deg, -10deg);
+            }
+
+            50%
+            {
+              transform: translate(10px, -10px) rotate(180deg) skew(-10deg, -10deg);
+            }
+        }
+      
+      </style>
+ <script>
+const ipc = require('electron').ipcRenderer;
+
+const remote = require('electron').remote;
+
+var tallyBoxWindowNumber = "";
+
+var inResizeMode = false;
+
+var borderMode = true;
+
+var currentMode = null;
+
+var colorPreview = "#00FF00";
+var colorProgram = "#FF0000";
+var colorPreviewProgram = "#FFCC00";
+
+var currentLabel = "";
+var showLabelMode = false;
+
+var TransparencyValue = 1;
+    
+function onLoad()
+{
+    ipc.on('TallyBox-Mode', function (event, mode) {
+        if (!inResizeMode)
+        {
+            currentMode = mode;
+            DrawBox();
+        }
+    });
+    
+    ipc.on('TallyBox-Color', function (event, mode, color) {
+        switch(mode)
+        {
+            case "Preview":
+                if (color)
+                {
+                    colorPreview = color;
+                }
+                break;
+            case "Program":
+                if (color)
+                {
+                    colorProgram = color;
+                }
+                break;
+            case "PreviewProgram":
+                if (color)
+                {
+                    colorPreviewProgram = color;
+                }
+                break;
+            default:
+                break;
+        }
+        
+        DrawBox();
+    });
+    
+    ipc.on('TallyBox-WindowNumber', function (event, number) {
+        tallyBoxWindowNumber = number;
+    });
+    
+   ipc.on('TallyBox-Border', function (event, borderValue) {
+       if (borderValue) //show a border
+       {
+           borderMode = true;
+           DrawBox();
+       }
+       else // show a box
+       {
+           borderMode = false;
+           DrawBox();
+       }
+    });
+    
+   ipc.on('TallyBox-Label', function (event, label) {
+        currentLabel = label;
+        DrawBox();
+    });
+    
+   ipc.on('TallyBox-ShowLabel', function (event, showLabel) {
+       if (showLabel)
+       {
+           showLabelMode = true;
+           DrawBox();
+       }
+       else
+       {
+           showLabelMode = false;
+           DrawBox();
+       }
+    });
+    
+   ipc.on('TallyBox-TransparencyValue', function (event, transparencyValue) {
+       transparencyValue = parseInt(transparencyValue);
+       TransparencyValue = transparencyValue;
+       
+       if (transparencyValue === NaN)
+       {
+           transparencyValue = 1;
+       }
+        
+        //set opacity of window
+        document.getElementById("tallybox").style.opacity = transparencyValue / 100;
+        
+    });
+    
+    ipc.on('TallyBox-Resize', function (event) {
+        document.getElementById("resizer").style.display = 'flex';
+        document.body.className = "resizerBackground";
+        inResizeMode = true;
+        document.getElementById("tallybox").style.opacity = "1";
+        document.getElementById("tallyWindowNumberLabel").innerHTML = "Tally Window " + tallyBoxWindowNumber;
+    });
+    
+    ipc.on('TallyBox-HideResize', function (event) {
+        document.getElementById("resizer").style.display = 'none';
+        document.body.className = "normalBackground";
+        inResizeMode = false;
+        document.getElementById("tallybox").style.opacity = "" + (TransparencyValue / 100);
+    });
+    
+    document.getElementById("btnSaveWindowPosition").addEventListener('click', function (event) {
+        ipc.send("SaveWindowPosition", tallyBoxWindowNumber);
+        document.getElementById("resizer").style.display = 'none';
+        document.body.className = "normalBackground";
+        inResizeMode = false;
+    });
+    
+    ipc.send("LoadStore-Colors");
+}
+
+function DrawBox()
+{
+    let currentColor = "";
+    
+    switch(currentMode)
+    {
+        case "Preview":
+            currentColor = colorPreview;
+            break;
+        case "Program":
+            currentColor = colorProgram;
+            break;
+        case "PreviewProgram":
+            currentColor = colorPreviewProgram;
+            break;
+        default:
+            currentColor = "#000000";
+            break;
+    }
+    
+    if (borderMode)
+    {
+        document.getElementById("tallybox").className = "tallybox-border";
+        document.getElementById("tallybox").style.backgroundColor = "";
+        document.getElementById("tallybox").style.borderColor = currentColor;
+        document.getElementById("tallyBoxLabel").className = "tallyBoxLabel-top";
+    }
+    else
+    {
+        document.getElementById("tallybox").className = "tallybox-box";
+        document.getElementById("tallybox").style.backgroundColor = currentColor;
+        document.getElementById("tallybox").style.borderColor = currentColor;
+        document.getElementById("tallyBoxLabel").className = "tallyBoxLabel-middle";
+    }
+    
+    if (showLabelMode)
+    {
+        document.getElementById("tallyBoxLabel").style.display = 'block';
+        document.getElementById("tallyBoxLabel").style.backgroundColor = currentColor;
+        document.getElementById("tallyBoxLabel").innerHTML = currentLabel.trim();
+    }
+    else
+    {
+        document.getElementById("tallyBoxLabel").style.display = 'none';
+    }
+    
+    if (((currentMode === "Clear") || (currentMode === "")) && (inResizeMode === false))
+    {
+        document.getElementById("tallybox").style.opacity = "0";
+    }
+    else
+    {
+        document.getElementById("tallybox").style.opacity = "" + (TransparencyValue / 100);
+    }
+}
+</script>
+    </head>
+    <body onLoad="onLoad();">
+        <div id="tallybox">
+            <div id="tallyBoxLabel"></div>
+            <div id="resizer">
+                <div id="resizer-middle"><span id="tallyWindowNumberLabel"></span><br /><button id="btnSaveWindowPosition">Save Window Position</button></div>
+                <div id="resizer-topleft"><span class="arrow arrow-top-left"></span></div>
+                <div id="resizer-topright"><span class="arrow arrow-top-right"></span></div>
+                <div id="resizer-bottomright"><span class="arrow arrow-bottom-right"></span></div>
+                <div id="resizer-bottomleft"><span class="arrow arrow-bottom-left"></span></div>
+            </div>
+        </div>
+    </body>
+</html>
