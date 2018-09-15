@@ -17,6 +17,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             <i>You can choose one of the following supported devices:</i><br />
                 <ul>
                     <li>Ross Carbonite</li>
+                    <li>Ross Carbonite Black</li>
+                    <li>Ross Carbonite Black Solo</li>
+                    <li>Ross Graphite</li>
                     <li>Generic TSL 3.1 Device<br />
                     Your TSL device should send data in this format:<br />
                     <pre>
@@ -32,20 +35,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     </pre>
                     Tally1 typically represents the <i>Preview</i> state and Tally2 typically represents the <i>Program</i> state. Tally3 and Tally 4 are not implemented in ProTally.
                     </li>
+                  <li>Blackmagic ATEM</li>
                 </ul>
-            <i>Using a Ross Carbonite Switcher:</i><br />
+            <i>Using a Ross Carbonite, Carbonite Black, Carbonite Black Solo, or Graphite Switcher:</i><br />
             <ul>
-                <li>On your Ross Carbonite switcher, configure a new device with these settings:
+                <li>On your Ross switcher, configure a new device with these settings:
                     <ul>
                         <li>IP Address: <span id="spanRossIPAddresses"></span></li>
                         <li>Port: <span id="spanRossPort"></span></li>
                         <li>Transport Type: UDP</li>
                     </ul>   
                 </li>
-                <li>Select "Ross Carbonite" in the device list at the top of the Settings menu.</li>
+                <li>Select the Ross device type you are using in the device list at the top of the Settings menu.</li>
                 <li>Make sure the Port number matches what you specified on your Ross device.</li>
                 <li>Select "UDP" as the protocol type.</li>
-                <li>Click "Update Device Settings".</li>
+                <li>Click "Connect".</li>
             </ul>
             <i>Using the TSL UMD 3.1 Protocol:</i><br />
             <ul>
@@ -56,10 +60,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         <li>Transport Type: TCP or UDP</li>
                     </ul>
                 </li>
-                <li>Select "Generic TSL 3.1 Device" in the device list at the top of the Settings menu.</li>
+                <li>In ProTally, select "Generic TSL 3.1 Device" in the device list at the top of the Settings menu.</li>
                 <li>Make sure the Port number matches what you specified on your Tally server.</li>
-                <li>Click "Update Device Settings".</li>
+                <li>Click "Connect".</li>
             </ul>
+            <br />
+          <i>Using a Blackmagic ATEM:</i><br />
+            <ul>
+                <li>Select "Blackmagic ATEM" in the device list at the top of the settings menu.</li>
+                <li>If your Blackmagic ATEM Switcher is not in the drop down list, it was not detected automatically on the network. Choose "manual entry" from the list and type in the IP address of your switcher.</li>
+                <li>Click "Connect".</li>
+            </ul>
+            <b><i>Click "Disconnect" to stop listening for device tally data at any time.</i></b>
             <br />
             <b>Specifying Tally Addresses:</b><br />
             <ul>
