@@ -13,10 +13,20 @@
             padding: 0px;
             font-family: Arial, sans-serif;
         }
-
+        
         body
         {
-            overflow:hidden;
+            overflow: hidden;
+        }
+        
+        #container
+        {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            -webkit-app-region: no-drag;
         }
         
         .normalBackground
@@ -38,6 +48,16 @@
             height: 100%;
             width: 95%;
             display: table;
+            opacity: 0;
+        }
+        
+        .tallybox-drag
+        {
+            -webkit-app-region: drag;
+        }
+        .tallybox-nodrag
+        {
+            -webkit-app-region: no-drag;
         }
         
         .tallybox-box
@@ -47,7 +67,7 @@
             width: 100%;
             display: table;
             justify-content: center;  
-            transition: all 500ms ease;
+            transition: all 300ms ease;
         }
         
         .tallybox-border
@@ -56,7 +76,7 @@
             height: 100%;
             width: 100%;
             display: table;        
-            transition: all 500ms ease;
+            transition: all 300ms ease;
             
         }
         
@@ -236,6 +256,23 @@ var TransparencyValue = 1;
     
 function onLoad()
 {
+    ipc.on('OSPlatform', function (event, platform) {
+        switch(platform)
+        {
+            case "win32":
+                //makes the box slightly smaller on Windows so it doesn't crop the content
+                let tallyBox = document.getElementById("tallybox");
+                tallyBox.style.width = "90%";
+                tallyBox.style.height = "95%";
+                
+                //hides the save window position button because a bug keeps it from being clickable anyway
+                document.getElementById("btnSaveWindowPosition").style.display = "none";
+                break;
+            default:
+                break;
+        }
+    });
+    
     ipc.on('TallyBox-Mode', function (event, mode) {
         if (!inResizeMode)
         {
@@ -308,13 +345,14 @@ function onLoad()
     });
     
    ipc.on('TallyBox-TransparencyValue', function (event, transparencyValue) {
-       transparencyValue = parseInt(transparencyValue);
-       TransparencyValue = transparencyValue;
+        transparencyValue = parseInt(transparencyValue);
        
        if (transparencyValue === NaN)
        {
            transparencyValue = 1;
        }
+       
+        TransparencyValue = transparencyValue;       
         
         //set opacity of window
         document.getElementById("tallybox").style.opacity = transparencyValue / 100;
@@ -324,6 +362,8 @@ function onLoad()
     ipc.on('TallyBox-Resize', function (event) {
         document.getElementById("resizer").style.display = 'flex';
         document.body.className = "resizerBackground";
+        document.getElementById("tallybox").classList.remove("tallybox-nodrag");
+        document.getElementById("tallybox").classList.add("tallybox-drag");
         inResizeMode = true;
         document.getElementById("tallybox").style.opacity = "1";
         document.getElementById("tallyWindowNumberLabel").innerHTML = "Tally Window " + tallyBoxWindowNumber;
@@ -332,6 +372,8 @@ function onLoad()
     ipc.on('TallyBox-HideResize', function (event) {
         document.getElementById("resizer").style.display = 'none';
         document.body.className = "normalBackground";
+        document.getElementById("tallybox").classList.remove("tallybox-drag");
+        document.getElementById("tallybox").classList.add("tallybox-nodrag");
         inResizeMode = false;
         document.getElementById("tallybox").style.opacity = "" + (TransparencyValue / 100);
     });
@@ -340,7 +382,10 @@ function onLoad()
         ipc.send("SaveWindowPosition", tallyBoxWindowNumber);
         document.getElementById("resizer").style.display = 'none';
         document.body.className = "normalBackground";
+        document.getElementById("tallybox").classList.remove("tallybox-drag");
+        document.getElementById("tallybox").classList.add("tallybox-nodrag");
         inResizeMode = false;
+        document.getElementById("tallybox").style.opacity = "" + (TransparencyValue / 100);
     });
     
     ipc.send("LoadStore-Colors");
@@ -392,26 +437,28 @@ function DrawBox()
         document.getElementById("tallyBoxLabel").style.display = 'none';
     }
     
-    if (((currentMode === "Clear") || (currentMode === "")) && (inResizeMode === false))
+    if (((currentMode === "Clear") || (currentMode === "") || (currentMode === null)) && (inResizeMode === false))
     {
         document.getElementById("tallybox").style.opacity = "0";
     }
-    else
-    {
+    else 
+   {
         document.getElementById("tallybox").style.opacity = "" + (TransparencyValue / 100);
     }
 }
 </script>
     </head>
     <body onLoad="onLoad();">
-        <div id="tallybox">
-            <div id="tallyBoxLabel"></div>
-            <div id="resizer">
-                <div id="resizer-middle"><span id="tallyWindowNumberLabel"></span><br /><button id="btnSaveWindowPosition">Save Window Position</button></div>
-                <div id="resizer-topleft"><span class="arrow arrow-top-left"></span></div>
-                <div id="resizer-topright"><span class="arrow arrow-top-right"></span></div>
-                <div id="resizer-bottomright"><span class="arrow arrow-bottom-right"></span></div>
-                <div id="resizer-bottomleft"><span class="arrow arrow-bottom-left"></span></div>
+        <div id="container">
+            <div id="tallybox">
+                <div id="tallyBoxLabel"></div>
+                <div id="resizer">
+                    <div id="resizer-middle"><span id="tallyWindowNumberLabel"></span><br /><button id="btnSaveWindowPosition">Save Window Position</button></div>
+                    <div id="resizer-topleft"><span class="arrow arrow-top-left"></span></div>
+                    <div id="resizer-topright"><span class="arrow arrow-top-right"></span></div>
+                    <div id="resizer-bottomright"><span class="arrow arrow-bottom-right"></span></div>
+                    <div id="resizer-bottomleft"><span class="arrow arrow-bottom-left"></span></div>
+                </div>
             </div>
         </div>
     </body>
