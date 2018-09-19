@@ -36,6 +36,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     Tally1 typically represents the <i>Preview</i> state and Tally2 typically represents the <i>Program</i> state. Tally3 and Tally 4 are not implemented in ProTally.
                     </li>
                   <li>Blackmagic ATEM</li>
+                    <li>OBS Studio</li>
                 </ul>
             <i>Using a Ross Carbonite, Carbonite Black, Carbonite Black Solo, or Graphite Switcher:</i><br />
             <ul>
@@ -71,14 +72,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 <li>If your Blackmagic ATEM Switcher is not in the drop down list, it was not detected automatically on the network. Choose "manual entry" from the list and type in the IP address of your switcher.</li>
                 <li>Click "Connect".</li>
             </ul>
+                        <br />
+            <i>Using OBS Studio:</i><br />
+            <ul>
+                <li>Install the OBS Websockets Plugin for your OBS Studio, and follow the configuration instructions provided.</li>
+                <li>In ProTally, Select "OBS Studio" in the device list at the top of the settings menu.</li>
+                <li>Enter the IP Address, Port, and Password you defined in the OBS Websocket settings.</li>
+                <li>Click "Connect".</li>
+                <li>ProTally can monitor any available source in OBS, whether it is a physical input via a capture card, or a virtual input like NDI, a browser window, color source, etc.</li>
+            </ul>
             <b><i>Click "Disconnect" to stop listening for device tally data at any time.</i></b>
             <br />
             <b>Specifying Tally Addresses:</b><br />
             <ul>
                 <li>ProTally supports up to 4 Tally Windows.</li>
-                <li>Enter an address (input number) into a Tally Address field.</li>
-                <li>To disable a particular Tally Box, enter "0" into the Tally Address field.</li>
-                <li>If you are not using a generic TSL 3.1 device, ProTally supports using the default addresses. The labels will update as the tally data is received. Click "Use Device-Specific Tally Addresses" to take advantage of this feature rather than typing in the address numbers manually.</li>
+                <li>Pick or enter an address (input number) into a Tally Address field.</li>
+                <li>To disable a particular Tally Box, choose "Black" or enter "0" into the Tally Address field.</li>
                 <li>Tally Boxes can either be displayed as transparent boxes with a color border, or as a filled-in box. The transparent box is turned on by default.</li>
                 <li>Tally Boxes can display the label, if the name is known and transmitted with the tally data.</li>
                 <li>To resize/position a tally box, click "Resize/Move" for that box. The Tally Box will appear on the screen. When you are finished, click "Save Window Position".</li>
@@ -87,6 +96,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             <b><i>Special Notes:</i></b><br />
             <ul>
                 <li>Tally Windows will display on top of all other windows. To temporarily hide them, choose "Hide All Boxes" from the tray menu.</li>
+                <li>You can resize/reposition windows to fit where you would like them on the screen by choosing "Resize" from the Settings window for each Tally Box.</li>
                 <li>Preview, Program, and Preview+Program (when an input is set to both) colors can be customized. Some TSL devices will send Preview data in Tally 2 with Program in Tally 1, whereas ProTally expects the opposite. If this is the case, simply change the colors to match the state desired. Click "Update Tally Settings" to save color changes.</li>
             </ul>
             </div>
