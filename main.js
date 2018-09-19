@@ -52,6 +52,10 @@ const defaultAtemServerPort = 9910;
 var ATEMdevice = null; //object variable
 var ATEMSwitchers = []; //mdns/bonjour discovered list of ATEM switchers available on the network
 
+//OBS Studio Module
+const OBSWebSocket = require('obs-websocket-js');
+var obs = null; // object variable
+
 //Device-Specific Arrays
 var tallySettingsArray = [];
 var useTallySettingsArray = false;
@@ -495,7 +499,7 @@ var TallySettings_RossGraphite = [
     {address: 122, label: "ME 2 Clean"}
 ];
 
-var DeviceInUse = ""; // the current device type in use (TSL, Ross Carbonite, ATEM, etc.)
+var DeviceInUse = ""; // the current device type in use (TSL, Ross Carbonite, ATEM, OBS, etc.)
 var DeviceConnected = false; // whether the current device is connected or not
 
 //General
@@ -599,6 +603,28 @@ app.on('ready', () => {
     let deviceInUse = store.get("DeviceInUse"); // The last device that was used
     
     //setUpDevice(deviceInUse); //auto starts/connects to the last device used
+    
+    //create default transparency values
+    if (!(store.get("TallyBox1-TransparencyValue")))
+    {
+        store.set("TallyBox1-TransparencyValue", "100");
+    }
+    
+    if (!(store.get("TallyBox2-TransparencyValue")))
+    {
+        store.set("TallyBox2-TransparencyValue", "100");
+    }
+    
+    if (!(store.get("TallyBox3-TransparencyValue")))
+    {
+        store.set("TallyBox3-TransparencyValue", "100");
+    }
+    
+    if (!(store.get("TallyBox4-TransparencyValue")))
+    {
+        store.set("TallyBox4-TransparencyValue", "100");
+    }
+    
     createTallyBoxWindows(true);
     
     FindATEMSwitchers();
@@ -612,9 +638,6 @@ function setUpDevice(deviceInUse)
     
     switch(deviceInUse)
     {
-        case "BlackmagicATEM":
-            setUpAtemServer();
-            break;
         case "RossCarbonite":
             setUpTSLServer();
             //tallySettingsArray = TallySettings_Carbonite.slice();
@@ -638,6 +661,12 @@ function setUpDevice(deviceInUse)
         case "TSL3.1":
             setUpTSLServer();
             useTallySettingsArray = false;
+            break;
+        case "BlackmagicATEM":
+            setUpAtemServer();
+            break;
+        case "OBSStudio":
+            setUpOBSStudioServer();
             break;
         default:
             notify("No Device Stored. You need to configure a device before you can continue.", true);
@@ -937,20 +966,136 @@ function createAtemDevice(atemIP)
         });
 
         ATEMdevice.on('inputTally', function(inputNumber, tallyState) {
-            processAtemTally(inputNumber, tallyState);
+            processATEMTally(inputNumber, tallyState);
         });
     }
     catch(error)
     {
         notify("ATEM Error: " + error, false);
-    }
+    }           
+}
+
+function setUpOBSStudioServer()
+{
+    try
+    {
+        obs = new OBSWebSocket();
+        
+        let ip = store.get("OBSStudio_IP");
+        let port = store.get("OBSStudio_Port");
+        let password = store.get("OBSStudio_Password");
+                       
+        obs.on('error', err => {
+            console.log('OBS socket error:', err);
+        });
+        
+        obs.onConnectionOpened(() => {
+            console.log('Connection Opened');
+            UpdateDeviceConnected(true);
+
+            // Send some requests.
+            obs.getSourcesList({}, (err, data) => {
+              console.log("Using callbacks to get sources:", err, data);
+              if (data)
+              {
+                  if (data.sources)
+                  {
+                    if (settingsWindow !== null)
+                      {
+                          settingsWindow.webContents.send("OBSStudio-Sources", data.sources);
+                      }
+                  }
+              }
+            });
+        });
+        
+        /*obs.on('ConnectionOpened', function (data) {
+            if (settingsWindow !== null)
+            {
+                settingsWindow.webContents.send("OBSStudio_Authenticated", true);
+            }
+            UpdateDeviceConnected(true);
             
+            obs.getSourcesList({}, function (err, data) {
+                console.log("Using callbacks:", err, data);
+                if (settingsWindow !== null)
+                {
+                    settingsWindow.webContents.send("OBSStudio-Sources", data.sources);
+                }
+            });
+        });*/
+        
+        obs.on('ConnectionClosed', function (data) {
+            UpdateDeviceConnected(false);
+        });
+        
+        obs.on('AuthenticationSuccess', function (data) {
+            /*if (settingsWindow !== null)
+            {
+                settingsWindow.webContents.send("OBSStudio_Authenticated", true);
+            }
+            UpdateDeviceConnected(true);
+            
+            obs.getSourcesList({}, function (err, data) {
+                console.log("Using callbacks:", err, data);
+                if (settingsWindow !== null)
+                {
+                    settingsWindow.webContents.send("OBSStudio-Sources", data.sources);
+                }
+            });*/
+        });
+        
+        obs.on('AuthenticationFailure', function (data) {
+            if (settingsWindow !== null)
+            {
+                settingsWindow.webContents.send("OBSStudio_Authenticated", false);
+            }
+        });
+        
+        obs.on('PreviewSceneChanged', function (data) {
+            if (data)
+            {
+                if (data.sources)
+                {
+                    //console.log(data);
+                    processOBSTally(data.sources, "Preview");       
+                }
+            }
+        });
+        
+        obs.on('SwitchScenes', function (data) {
+            if (data)
+            {
+                if (data.sources)
+                {
+                    //console.log("***PGM DATA***");
+                    //console.log(data);
+                    processOBSTally(data.sources, "Program");       
+                }
+            }
+        });
+        
+        obs.connect({ address: ip + ":" + port, password: password }, function (data) {
+            console.log("CONNECTED TO OBS");
+          console.log(data);
+        });
+    }
+    catch (error)
+    {
+        console.log(error);
+    }
+}
+
+function stopOBSStudioServer()
+{
+    obs.disconnect();
 }
 
 function stopAllServers()
 {
     stopTSLServer();
     stopATEMServer();
+    stopOBSStudioServer();
 }
 
 function stopATEMServer()
@@ -1307,7 +1452,7 @@ function notify(message, display)
     }
 }
 
-function processAtemTally(inputNumber, tallyState) // Process the data received from the ATEM
+function processATEMTally(inputNumber, tallyState) // Process the data received from the ATEM
 {
     //build an object like the TSL module creates so we can use the same function to process it
     let tallyObj = {};
@@ -1329,6 +1474,300 @@ function processAtemTally(inputNumber, tallyState) // Process the data received 
     tallyObj.label = label;
     
     processTSLTally(tallyObj);
+}
+
+function processOBSTally(sourceArray, tallyType)
+{
+    let address1 = store.get("TallyBox1-Address");
+    let address2 = store.get("TallyBox2-Address");
+    let address3 = store.get("TallyBox3-Address");
+    let address4 = store.get("TallyBox4-Address");
+    
+    if (!address1)
+    {
+        address1 = "";
+    }
+    
+    if (!address2)
+    {
+        address2 = "";
+    }
+    
+    if (!address3)
+    {
+        address3 = "";
+    }
+    
+    if (!address4)
+    {
+        address4 = "";
+    }
+    
+    let address1_received = false;
+    let address2_received = false;
+    let address3_received = false;
+    let address4_received = false;
+    
+    for (let i = 0; i < sourceArray.length; i++)
+    {
+        let tallyObj = {};
+        tallyObj.label = sourceArray[i].name;
+        tallyObj.address = sourceArray[i].name;
+        tallyObj.tally4 = 0;
+        tallyObj.tally3 = 0;
+        tallyObj.tally2 = 0; //PGM
+        tallyObj.tally1 = 0; //PVW
+        
+        if (sourceArray[i].render) //if it's currently visible in this scene or not
+        {
+            switch(tallyType)
+            {
+                case "Preview":
+                    tallyObj.tally1 = 1;
+                    break;
+                case "Program":
+                    tallyObj.tally2 = 1;
+                    break;
+                default:
+                    break;
+            }
+            
+            if (address1 === sourceArray[i].name)
+            {
+                address1_received = true;
+                switch(tallyBox1_currentState)
+                {
+                    case "Preview":
+                        tallyObj.tally1 = 1; //PVW
+                        break;
+                    case "Program":
+                        tallyObj.tally2 = 1; //PGM
+                        break;
+                    case "PreviewProgram":
+                        tallyObj.tally2 = 1; //PGM
+                        tallyObj.tally1 = 1; //PVW
+                        break;
+                    default:
+                        break;
+                }
+            }
+            if (address2 === sourceArray[i].name)
+            {
+                address2_received = true;
+                switch(tallyBox2_currentState)
+                {
+                    case "Preview":
+                        tallyObj.tally1 = 1; //PVW
+                        break;
+                    case "Program":
+                        tallyObj.tally2 = 1; //PGM
+                        break;
+                    case "PreviewProgram":
+                        tallyObj.tally2 = 1; //PGM
+                        tallyObj.tally1 = 1; //PVW
+                        break;
+                    default:
+                        break;
+                }
+            }
+            if (address3 === sourceArray[i].name)
+            {
+                address3_received = true;
+                switch(tallyBox3_currentState)
+                {
+                    case "Preview":
+                        tallyObj.tally1 = 1; //PVW
+                        break;
+                    case "Program":
+                        tallyObj.tally2 = 1; //PGM
+                        break;
+                    case "PreviewProgram":
+                        tallyObj.tally2 = 1; //PGM
+                        tallyObj.tally1 = 1; //PVW
+                        break;
+                    default:
+                        break;
+                }
+            }
+            if (address4 === sourceArray[i].name)
+            {
+                address4_received = true;
+                switch(tallyBox4_currentState)
+                {
+                    case "Preview":
+                        tallyObj.tally1 = 1; //PVW
+                        break;
+                    case "Program":
+                        tallyObj.tally2 = 1; //PGM
+                        break;
+                    case "PreviewProgram":
+                        tallyObj.tally2 = 1; //PGM
+                        tallyObj.tally1 = 1; //PVW
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        processTSLTally(tallyObj);
+    }
+    
+    //also need to loop through array of addresses, and if they're not in this new preview array, we need to send "clear" TSL objects of those addresses so they get removed
+    if (!address1_received)
+    {
+        let tallyAddressObj = {};
+        tallyAddressObj.address = address1;
+        tallyAddressObj.label = address1;
+        tallyAddressObj.tally4 = 0; //not currently implemented
+        tallyAddressObj.tally3 = 0; //not currently implemented
+       
+        switch(tallyType)
+        {
+            case "Preview":
+                if ((tallyBox1_currentState === "Program") || (tallyBox1_currentState === "PreviewProgram"))
+                {
+                    tallyAddressObj.tally2 = 1; //PGM
+                }
+                else
+                {
+                    tallyAddressObj.tally2 = 0; //PGM
+                }
+                tallyAddressObj.tally1 = 0; //PVW
+                break;
+            case "Program":
+                if ((tallyBox1_currentState === "Preview") || (tallyBox1_currentState === "PreviewProgram"))
+                {
+                    tallyAddressObj.tally1 = 1; //PVW
+                }
+                else
+                {
+                    tallyAddressObj.tally1 = 0; //PVW
+                }
+                tallyAddressObj.tally2 = 0; //PGM
+                break;
+            default:
+                break;
+        }
+
+        processTSLTally(tallyAddressObj);
+    }
+    
+    if (!address2_received)
+    {
+        let tallyAddressObj = {};
+        tallyAddressObj.address = address2;
+        tallyAddressObj.label = address2;
+        tallyAddressObj.tally4 = 0;
+        tallyAddressObj.tally3 = 0;
+        
+        switch(tallyType)
+        {
+            case "Preview":
+                if ((tallyBox2_currentState === "Program") || (tallyBox2_currentState === "PreviewProgram"))
+                {
+                    tallyAddressObj.tally2 = 1; //PGM
+                }
+                else
+                {
+                    tallyAddressObj.tally2 = 0; //PGM
+                }
+                tallyAddressObj.tally1 = 0; //PVW
+                break;
+            case "Program":
+                if ((tallyBox2_currentState === "Preview") || (tallyBox2_currentState === "PreviewProgram"))
+                {
+                    tallyAddressObj.tally1 = 1; //PVW
+                }
+                else
+                {
+                    tallyAddressObj.tally1 = 0; //PVW
+                }
+                tallyAddressObj.tally2 = 0; //PGM
+                break;
+            default:
+                break;
+        }
+        
+        processTSLTally(tallyAddressObj);
+    }
+    
+    if (!address3_received)
+    {
+        let tallyAddressObj = {};
+        tallyAddressObj.address = address3;
+        tallyAddressObj.label = address3;
+        tallyAddressObj.tally4 = 0;
+        tallyAddressObj.tally3 = 0;
+
+        switch(tallyType)
+        {
+            case "Preview":
+                if ((tallyBox3_currentState === "Program") || (tallyBox3_currentState === "PreviewProgram"))
+                {
+                    tallyAddressObj.tally2 = 1; //PGM
+                }
+                else
+                {
+                    tallyAddressObj.tally2 = 0; //PGM
+                }
+                tallyAddressObj.tally1 = 0; //PVW
+                break;
+            case "Program":
+                if ((tallyBox3_currentState === "Preview") || (tallyBox3_currentState === "PreviewProgram"))
+                {
+                    tallyAddressObj.tally1 = 1; //PVW
+                }
+                else
+                {
+                    tallyAddressObj.tally1 = 0; //PVW
+                }
+                tallyAddressObj.tally2 = 0; //PGM
+                break;
+            default:
+                break;
+        }
+
+        processTSLTally(tallyAddressObj);
+    }
+    
+    if (!address4_received)
+    {
+        let tallyAddressObj = {};
+        tallyAddressObj.address = address4;
+        tallyAddressObj.label = address4;
+        tallyAddressObj.tally4 = 0;
+        tallyAddressObj.tally3 = 0;
+
+        switch(tallyType)
+        {
+            case "Preview":
+                if ((tallyBox4_currentState === "Program") || (tallyBox4_currentState === "PreviewProgram"))
+                {
+                    tallyAddressObj.tally2 = 1; //PGM
+                }
+                else
+                {
+                    tallyAddressObj.tally2 = 0; //PGM
+                }
+                tallyAddressObj.tally1 = 0; //PVW
+                break;
+            case "Program":
+                if ((tallyBox4_currentState === "Preview") || (tallyBox4_currentState === "PreviewProgram"))
+                {
+                    tallyAddressObj.tally1 = 1; //PVW
+                }
+                else
+                {
+                    tallyAddressObj.tally1 = 0; //PVW
+                }
+                tallyAddressObj.tally2 = 0; //PGM
+                break;
+            default:
+                break;
+        }
+
+        processTSLTally(tallyAddressObj);
+    }
 }
 
 function checkMainTallyValue(tallyObj, addressNumber)
@@ -1897,6 +2336,10 @@ ipc.on("LoadStore-BlackmagicATEMinfo", function (event) {
    event.sender.send("BlackmagicATEMinfo", store.get("BlackmagicATEMip"), store.get("BlackmagicATEMport"), defaultAtemServerPort);
 });
 
+ipc.on("LoadStore-OBSStudioInfo", function (event) {
+   event.sender.send("OBSStudioInfo", store.get("OBSStudio_IP"), store.get("OBSStudio_Port"), store.get("OBSStudio_Password")); 
+});
+
 ipc.on("LoadStore-NotificationArray", function (event) {
    event.sender.send("NotificationArray", notificationArray); 
 });
@@ -2080,6 +2523,13 @@ ipc.on("UpdateStore-BlackmagicATEMinfo", function (event, ATEMip, ATEMport) {
    store.set("BlackmagicATEMip", ATEMip);
    store.set("BlackmagicATEMport", ATEMport);
    setUpAtemServer();
+});
+
+ipc.on("UpdateStore-OBSStudioInfo", function (event, ip, port, password) {
+   store.set("OBSStudio_IP", ip);
+   store.set("OBSStudio_Port", port);
+   store.set("OBSStudio_Password", password);
+   setUpOBSStudioServer();
 });
 
 ipc.on("ShowResizer", function (event, tallyBoxWindowNumber) {

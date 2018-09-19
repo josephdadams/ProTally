@@ -10,6 +10,7 @@
               -webkit-user-select: none;
               -webkit-app-region: drag;
               font-family: Arial, sans-serif;
+              font-size: 12px;
           }
 
     .divSquare
@@ -243,7 +244,7 @@
 
 #divDeviceStatus
 {
-    width: 120px;
+    width: 130px;
     position: absolute;
     top: 20px;
     left: 20px;
@@ -259,6 +260,7 @@ var TallyArray = [];
 var NotificationArray = [];
 
 var ATEMSwitchers = []; // global array of ATEM Switchers that have been discovered by the main process
+var OBSStudio_Sources = []; // global array of OBS Studio Sources that have been discovered
 
 var DeviceInUse = ""; // the device (Ross Carbonite, Blackmagic ATEM, Generic TSL, etc.) currently being used
 var DeviceConnected = false; //whether the device is currently connected or not
@@ -785,6 +787,7 @@ function onLoad()
             case "RossCarboniteBlackSolo":
             case "RossGraphite":
             case "BlackmagicATEM":
+            case "OBSStudio":
                 address1Value = document.getElementById("dropdown1").options[document.getElementById("dropdown1").selectedIndex].value;
                 address2Value = document.getElementById("dropdown2").options[document.getElementById("dropdown2").selectedIndex].value;
                 address3Value = document.getElementById("dropdown3").options[document.getElementById("dropdown3").selectedIndex].value;
@@ -954,6 +957,8 @@ function onLoad()
             case "BlackmagicATEM":
                 deviceAddressLabels = BlackmagicATEM_TallyFieldAddressLabels;
                 break;
+            case "OBSStudio":
+                deviceAddressLabels = OBSStudio_Sources;
             default:
                 break;
         }
@@ -1077,7 +1082,8 @@ function onLoad()
         document.getElementById("divDeviceSettings_RossCarboniteBlackSolo").style.display = 'none';
         document.getElementById("divDeviceSettings_RossGraphite").style.display = 'none';
         document.getElementById("divDeviceSettings_TSL31").style.display = 'none';
-        document.getElementById("divDeviceSettings_BlackmagicATEM").style.display = 'none';        
+        document.getElementById("divDeviceSettings_BlackmagicATEM").style.display = 'none';
+        document.getElementById("divDeviceSettings_OBSStudio").style.display = 'none';
         
         switch (deviceSelected)
         {
@@ -1107,6 +1113,10 @@ function onLoad()
                 break;
             case "BlackmagicATEM":
                 document.getElementById("divDeviceSettings_BlackmagicATEM").style.display = 'inline';
+                useSpecificTallyFieldAddressLabels(deviceSelected);
+                break;
+            case "OBSStudio":
+                document.getElementById("divDeviceSettings_OBSStudio").style.display = 'inline';
                 useSpecificTallyFieldAddressLabels(deviceSelected);
                 break;
             default:
@@ -1212,7 +1222,24 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
                         btnUpdateDeviceSettings.style.backgroundColor = "#ffcc00";
                         btnUpdateDeviceSettings.innerHTML = "Connecting...";
                         DeviceInUse = deviceInUse;
-
+                    }
+                    break;
+                case "OBSStudio":
+                    let OBSStudio_IP = document.getElementById("txtOBSStudio_IP").value;
+                    let OBSStudio_Port = document.getElementById("txtOBSStudio_Port").value;
+                    let OBSStudio_Password = document.getElementById("txtOBSStudio_Password").value;
+                    
+                    if (!ValidateIPaddress(OBSStudio_IP))
+                    {
+                        alert("Invalid IP address entered.");
+                    }
+                    else
+                    {
+                        ipc.send("UpdateStore-OBSStudioInfo", OBSStudio_IP, OBSStudio_Port, OBSStudio_Password);
+                        ipc.send("UpdateStore-DeviceInUse", deviceInUse);
+                        btnUpdateDeviceSettings.style.backgroundColor = "#ffcc00";
+                        btnUpdateDeviceSettings.innerHTML = "Connecting...";
+                        DeviceInUse = deviceInUse;
                     }
                     break;
                 default:
@@ -1232,6 +1259,7 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
             case "RossCarboniteBlackSolo":
             case "RossGraphite":
             case "BlackmagicATEM":
+            case "OBSStudio":
                 assignTallyBoxDropDownValues(addressNumber, addressValue);       
                 break;
             default:
@@ -1366,6 +1394,18 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
         }
     });
     
+    ipc.on("OBSStudio-Sources", function (event, sources) {
+        OBSStudio_Sources = [];
+        for (let i = 0; i < sources.length; i++)
+        {
+            let sourceObj = {};
+            sourceObj.address = sources[i].name;
+            sourceObj.label = sources[i].name;
+            OBSStudio_Sources.push(sourceObj);
+        }
+        useSpecificTallyFieldAddressLabels("OBSStudio");
+    });
+    
     ipc.on('DeviceInUse', function (event, deviceInUse) {
         document.getElementById("divDeviceSettings_RossCarbonite").style.display = 'none';
         document.getElementById("divDeviceSettings_RossCarboniteBlack").style.display = 'none';
@@ -1373,6 +1413,7 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
         document.getElementById("divDeviceSettings_RossGraphite").style.display = 'none';
         document.getElementById("divDeviceSettings_TSL31").style.display = 'none';
         document.getElementById("divDeviceSettings_BlackmagicATEM").style.display = 'none';
+        document.getElementById("divDeviceSettings_OBSStudio").style.display = 'none';
         
         ddlDevices.selectedIndex = 0;
         for(let i = 0; i < ddlDevices.options.length; i++)
@@ -1419,6 +1460,11 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
                 ipc.send("LoadStore-BlackmagicATEMinfo");
                 useSpecificTallyFieldAddressLabels(deviceInUse);
                 break;
+            case "OBSStudio":
+                document.getElementById("divDeviceSettings_OBSStudio").style.display = 'inline';
+                ipc.send("LoadStore-OBSStudioInfo");
+                useSpecificTallyFieldAddressLabels(deviceInUse);
+                break;
             default:
                 ddlDevices.selectedIndex = 0;
                 break;
@@ -1429,6 +1475,7 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
     
     ipc.on("DeviceConnected", function (event, value) {
         DeviceConnected = value;
+        console.log(DeviceInUse + ": Connected: " + DeviceConnected);
         if (value)
         {
             EnableTallyFields(true);
@@ -1475,6 +1522,10 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
                     }
 
                     btnUpdateDeviceSettings.innerHTML = "Disconnect";
+                    break;
+                case "OBSStudio":
+                    divDeviceStatus.innerHTML = "Listening for OBS data";
+                    btnUpdateDeviceSettings.innerHTML = "Stop Listening";
                     break;
                 default:
                     break;
@@ -1575,6 +1626,39 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
         else
         {
             txtBlackmagicATEMport.value = ATEMdefaultport;
+        }
+    });
+    
+    ipc.on("OBSStudioInfo", function (event, ip, port, password) {
+        let txtOBSStudio_IP = document.getElementById("txtOBSStudio_IP");
+        let txtOBSStudio_Port = document.getElementById("txtOBSStudio_Port");
+        let txtOBSStudio_Password = document.getElementById("txtOBSStudio_Password");
+        
+        if (ip)
+        {
+            txtOBSStudio_IP.value = ip;
+        }
+        else
+        {
+            txtOBSStudio_IP.value = "0.0.0.0";
+        }
+        
+        if (port)
+        {
+            txtOBSStudio_Port.value = port;
+        }
+        else
+        {
+            txtOBSStudio_Port.value = "4444"; //default port
+        }
+        
+        if (password)
+        {
+            txtOBSStudio_Password.value = password;
+        }
+        else
+        {
+            txtOBSStudio_Password.value = "";
         }
     });
     
@@ -1697,6 +1781,7 @@ function ValidateIPaddress(ipaddress)
                             <option value="RossGraphite">Ross Graphite</option>
                             <option value="TSL3.1">Generic TSL 3.1 Device</option>
                             <option value="BlackmagicATEM">Blackmagic ATEM</option>
+                            <option value="OBSStudio">OBS Studio</option>
                         </select><br />
                         <div id="divDeviceSettings_RossCarbonite" style="display:none;">
                         </div>
@@ -1718,6 +1803,11 @@ function ValidateIPaddress(ipaddress)
                                 IP Address: <input type="text" id="txtBlackmagicATEMip" size="15" /><br />
                                 <input type="text" id="txtBlackmagicATEMport" style="display:none;" size="5" />
                             </div>
+                        </div>
+                        <div id="divDeviceSettings_OBSStudio">
+                            IP Address: <input type="text" id="txtOBSStudio_IP" size="15" /><br />
+                            Port: <input type="text" id="txtOBSStudio_Port" size="5" /><br />
+                            Password: <input type="password" id="txtOBSStudio_Password" size="10" />
                         </div>
                     </div>
                     <div id="divDeviceStatus">
