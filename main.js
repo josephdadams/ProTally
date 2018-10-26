@@ -1088,7 +1088,10 @@ function setUpOBSStudioServer()
 
 function stopOBSStudioServer()
 {
-    obs.disconnect();
+    if (obs !== null)
+    {
+        obs.disconnect();
+    }
 }
 
 function stopAllServers()
