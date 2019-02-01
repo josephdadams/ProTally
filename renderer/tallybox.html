@@ -281,29 +281,32 @@ function onLoad()
         }
     });
     
-    ipc.on('TallyBox-Color', function (event, mode, color) {
-        switch(mode)
+    ipc.on('TallyBox-Color', function (event, windowNumber, mode, color) {
+        if (tallyBoxWindowNumber === windowNumber)
         {
-            case "Preview":
-                if (color)
-                {
-                    colorPreview = color;
-                }
-                break;
-            case "Program":
-                if (color)
-                {
-                    colorProgram = color;
-                }
-                break;
-            case "PreviewProgram":
-                if (color)
-                {
-                    colorPreviewProgram = color;
-                }
-                break;
-            default:
-                break;
+            switch(mode)
+            {
+                case "Preview":
+                    if (color)
+                    {
+                        colorPreview = color;
+                    }
+                    break;
+                case "Program":
+                    if (color)
+                    {
+                        colorProgram = color;
+                    }
+                    break;
+                case "PreviewProgram":
+                    if (color)
+                    {
+                        colorPreviewProgram = color;
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
         
         DrawBox();

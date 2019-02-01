@@ -2311,9 +2311,22 @@ ipc.on("LoadStore-ShowLabels", function (event) {
 });
 
 ipc.on("LoadStore-Colors", function (event) {
-   event.sender.send("TallyBox-Color", "Preview", store.get('TallyBox-Color-Preview'));
-   event.sender.send("TallyBox-Color", "Program", store.get('TallyBox-Color-Program'));
-   event.sender.send("TallyBox-Color", "PreviewProgram", store.get('TallyBox-Color-PreviewProgram'));
+    console.log("Loading colors.");
+   event.sender.send("TallyBox-Color", "1", "Preview", store.get('TallyBox1-Color-Preview'));
+   event.sender.send("TallyBox-Color", "1", "Program", store.get('TallyBox1-Color-Program'));
+   event.sender.send("TallyBox-Color", "1", "PreviewProgram", store.get('TallyBox1-Color-PreviewProgram'));
+   
+   event.sender.send("TallyBox-Color", "2", "Preview", store.get('TallyBox2-Color-Preview'));
+   event.sender.send("TallyBox-Color", "2", "Program", store.get('TallyBox2-Color-Program'));
+   event.sender.send("TallyBox-Color", "2", "PreviewProgram", store.get('TallyBox2-Color-PreviewProgram'));
+   
+   event.sender.send("TallyBox-Color", "3", "Preview", store.get('TallyBox3-Color-Preview'));
+   event.sender.send("TallyBox-Color", "3", "Program", store.get('TallyBox3-Color-Program'));
+   event.sender.send("TallyBox-Color", "3", "PreviewProgram", store.get('TallyBox3-Color-PreviewProgram'));
+   
+   event.sender.send("TallyBox-Color", "4", "Preview", store.get('TallyBox4-Color-Preview'));
+   event.sender.send("TallyBox-Color", "4", "Program", store.get('TallyBox4-Color-Program'));
+   event.sender.send("TallyBox-Color", "4", "PreviewProgram", store.get('TallyBox4-Color-PreviewProgram'));
 });
 
 ipc.on("LoadStore-ResizeModes", function (event) {
@@ -2421,44 +2434,44 @@ ipc.on("UpdateStore-TallyBoxAddress", function (event, addressNumber, addressVal
     }
 });
 
-ipc.on("UpdateStore-Color", function (event, mode, color) {
+ipc.on("UpdateStore-Color", function (event, tallyBoxWindowNumber, mode, color) {
     let oldColor = "";
     switch(mode)
     {
         case "Preview":
-            oldColor = store.get("TallyBox-Color-Preview")
-            store.set("TallyBox-Color-Preview", color);
-            tallyBoxWindow1.webContents.send("TallyBox-Color", "Preview", color);
-            tallyBoxWindow2.webContents.send("TallyBox-Color", "Preview", color);
-            tallyBoxWindow3.webContents.send("TallyBox-Color", "Preview", color);
-            tallyBoxWindow4.webContents.send("TallyBox-Color", "Preview", color);
+            oldColor = store.get("TallyBox" + tallyBoxWindowNumber + "-Color-Preview");
+            store.set("TallyBox" + tallyBoxWindowNumber + "-Color-Preview", color);
+            tallyBoxWindow1.webContents.send("TallyBox-Color", tallyBoxWindowNumber, "Preview", color);
+            tallyBoxWindow2.webContents.send("TallyBox-Color", tallyBoxWindowNumber, "Preview", color);
+            tallyBoxWindow3.webContents.send("TallyBox-Color", tallyBoxWindowNumber, "Preview", color);
+            tallyBoxWindow4.webContents.send("TallyBox-Color", tallyBoxWindowNumber, "Preview", color);
             if (color !== oldColor)
             {
-                notify("Preview Color set to: " + color, false);
+                notify("Preview Color for Tally Box " + tallyBoxWindowNumber + " set to: " + color, false);
             }
             break;
         case "Program":
-            oldColor = store.get("TallyBox-Color-Program");
-            store.set("TallyBox-Color-Program", color);
-            tallyBoxWindow1.webContents.send("TallyBox-Color", "Program", color);
-            tallyBoxWindow2.webContents.send("TallyBox-Color", "Program", color);
-            tallyBoxWindow3.webContents.send("TallyBox-Color", "Program", color);
-            tallyBoxWindow4.webContents.send("TallyBox-Color", "Program", color);
+            oldColor = store.get("TallyBox" + tallyBoxWindowNumber + "-Color-Program");
+            store.set("TallyBox" + tallyBoxWindowNumber + "-Color-Program", color);
+            tallyBoxWindow1.webContents.send("TallyBox-Color", tallyBoxWindowNumber, "Program", color);
+            tallyBoxWindow2.webContents.send("TallyBox-Color", tallyBoxWindowNumber, "Program", color);
+            tallyBoxWindow3.webContents.send("TallyBox-Color", tallyBoxWindowNumber, "Program", color);
+            tallyBoxWindow4.webContents.send("TallyBox-Color", tallyBoxWindowNumber, "Program", color);
             if (color !== oldColor)
             {
-                notify("Program Color set to: " + color, false);
+                notify("Program Color for Tally Box " + tallyBoxWindowNumber + " set to: " + color, false);
             }
             break;
         case "PreviewProgram":
-            oldColor = store.get("TallyBox-Color-PreviewProgram");
-            store.set("TallyBox-Color-PreviewProgram", color);
-            tallyBoxWindow1.webContents.send("TallyBox-Color", "PreviewProgram", color);
-            tallyBoxWindow2.webContents.send("TallyBox-Color", "PreviewProgram", color);
-            tallyBoxWindow3.webContents.send("TallyBox-Color", "PreviewProgram", color);
-            tallyBoxWindow4.webContents.send("TallyBox-Color", "PreviewProgram", color);
+            oldColor = store.get("TallyBox" + tallyBoxWindowNumber + "-Color-PreviewProgram");
+            store.set("TallyBox" + tallyBoxWindowNumber + "-Color-PreviewProgram", color);
+            tallyBoxWindow1.webContents.send("TallyBox-Color", tallyBoxWindowNumber, "PreviewProgram", color);
+            tallyBoxWindow2.webContents.send("TallyBox-Color", tallyBoxWindowNumber, "PreviewProgram", color);
+            tallyBoxWindow3.webContents.send("TallyBox-Color", tallyBoxWindowNumber, "PreviewProgram", color);
+            tallyBoxWindow4.webContents.send("TallyBox-Color", tallyBoxWindowNumber, "PreviewProgram", color);
             if (color !== oldColor)
             {
-                notify("Preview+Program Color set to: " + color, false);
+                notify("Preview+Program for Tally Box " + tallyBoxWindowNumber + " Color set to: " + color, false);
             }
             break;
         default:

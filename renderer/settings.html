@@ -16,7 +16,7 @@
     .divSquare
     {
         width:48%;
-        height:100px;
+        height:145px;
         margin:4px;
         border:1px solid black;
         float: left;
@@ -74,6 +74,12 @@
         position: absolute;
         left: 120px;
         top: 15px;
+    }
+    .colors
+    {
+        position: absolute;
+        left: 10px;
+        top: 65px;
     }
     
 .onoffswitch {
@@ -823,13 +829,37 @@ function onLoad()
         ipc.send('UpdateStore-TallyBoxAddress', "3", address3Value);
         ipc.send('UpdateStore-TallyBoxAddress', "4", address4Value);
         
-        let colorPreview = document.getElementById("colorPreview").value;
-        let colorProgram = document.getElementById("colorProgram").value;
-        let colorPreviewProgram = document.getElementById("colorPreviewProgram").value;
+        let tallybox1_colorPreview = document.getElementById("tallybox1_colorPreview").value;
+        let tallybox1_colorProgram = document.getElementById("tallybox1_colorProgram").value;
+        let tallybox1_colorPreviewProgram = document.getElementById("tallybox1_colorPreviewProgram").value;
         
-        ipc.send("UpdateStore-Color", "Preview", colorPreview);
-        ipc.send("UpdateStore-Color", "Program", colorProgram);
-        ipc.send("UpdateStore-Color", "PreviewProgram", colorPreviewProgram);
+        let tallybox2_colorPreview = document.getElementById("tallybox2_colorPreview").value;
+        let tallybox2_colorProgram = document.getElementById("tallybox2_colorProgram").value;
+        let tallybox2_colorPreviewProgram = document.getElementById("tallybox2_colorPreviewProgram").value;
+        
+        let tallybox3_colorPreview = document.getElementById("tallybox3_colorPreview").value;
+        let tallybox3_colorProgram = document.getElementById("tallybox3_colorProgram").value;
+        let tallybox3_colorPreviewProgram = document.getElementById("tallybox3_colorPreviewProgram").value;
+        
+        let tallybox4_colorPreview = document.getElementById("tallybox4_colorPreview").value;
+        let tallybox4_colorProgram = document.getElementById("tallybox4_colorProgram").value;
+        let tallybox4_colorPreviewProgram = document.getElementById("tallybox4_colorPreviewProgram").value;
+        
+        ipc.send("UpdateStore-Color", "1", "Preview", tallybox1_colorPreview);
+        ipc.send("UpdateStore-Color", "1", "Program", tallybox1_colorProgram);
+        ipc.send("UpdateStore-Color", "1", "PreviewProgram", tallybox1_colorPreviewProgram);
+        
+        ipc.send("UpdateStore-Color", "2", "Preview", tallybox2_colorPreview);
+        ipc.send("UpdateStore-Color", "2", "Program", tallybox2_colorProgram);
+        ipc.send("UpdateStore-Color", "2", "PreviewProgram", tallybox2_colorPreviewProgram);
+        
+        ipc.send("UpdateStore-Color", "3", "Preview", tallybox3_colorPreview);
+        ipc.send("UpdateStore-Color", "3", "Program", tallybox3_colorProgram);
+        ipc.send("UpdateStore-Color", "3", "PreviewProgram", tallybox3_colorPreviewProgram);
+        
+        ipc.send("UpdateStore-Color", "4", "Preview", tallybox4_colorPreview);
+        ipc.send("UpdateStore-Color", "4", "Program", tallybox4_colorProgram);
+        ipc.send("UpdateStore-Color", "4", "PreviewProgram", tallybox4_colorPreviewProgram);
         
         ipc.send("LoadStore-Addresses");
     });
@@ -1316,7 +1346,7 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
         }
     });
     
-    ipc.on('TallyBox-Color', function (event, mode, color) {
+    ipc.on('TallyBox-Color', function (event, tallyBoxWindowNumber, mode, color) {
         switch(mode)
         {
             case "Preview":
@@ -1324,21 +1354,21 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
                 {
                     color = "#00FF00";
                 }                    
-                document.getElementById("colorPreview").value = color;
+                document.getElementById("tallybox" + tallyBoxWindowNumber + "_colorPreview").value = color;
                 break;
             case "Program":
                 if (!color)
                 {
                     color = "#FF0000";
                 }      
-                document.getElementById("colorProgram").value = color;
+                document.getElementById("tallybox" + tallyBoxWindowNumber + "_colorProgram").value = color;
                 break;
             case "PreviewProgram":
                 if (!color)
                 {
                     color = "#FFCC00";
                 }      
-                document.getElementById("colorPreviewProgram").value = color;
+                document.getElementById("tallybox" + tallyBoxWindowNumber + "_colorPreviewProgram").value = color;
                 break;
             default:
                 break;
@@ -1710,14 +1740,12 @@ function EnableTallyFields(value)
         document.getElementById("tallySettings2").classList.remove("divDisabled");
         document.getElementById("tallySettings3").classList.remove("divDisabled");
         document.getElementById("tallySettings4").classList.remove("divDisabled");
-        document.getElementById("OtherSettings").classList.remove("divDisabled");
         document.getElementById("btnUpdateSettings").classList.remove("divDisabled");
         
         document.getElementById("tallySettings1").classList.add("divEnabled");
         document.getElementById("tallySettings2").classList.add("divEnabled");
         document.getElementById("tallySettings3").classList.add("divEnabled");
         document.getElementById("tallySettings4").classList.add("divEnabled");
-        document.getElementById("OtherSettings").classList.add("divEnabled");
         document.getElementById("btnUpdateSettings").classList.add("divEnabled");
     }
     else
@@ -1726,14 +1754,12 @@ function EnableTallyFields(value)
         document.getElementById("tallySettings2").classList.remove("divEnabled");
         document.getElementById("tallySettings3").classList.remove("divEnabled");
         document.getElementById("tallySettings4").classList.remove("divEnabled");
-        document.getElementById("OtherSettings").classList.remove("divEnabled");
         document.getElementById("btnUpdateSettings").classList.remove("divEnabled");
         
         document.getElementById("tallySettings1").classList.add("divDisabled");
         document.getElementById("tallySettings2").classList.add("divDisabled");
         document.getElementById("tallySettings3").classList.add("divDisabled");
         document.getElementById("tallySettings4").classList.add("divDisabled");
-        document.getElementById("OtherSettings").classList.add("divDisabled");
         document.getElementById("btnUpdateSettings").classList.add("divDisabled");
     }
 }
@@ -1850,6 +1876,11 @@ function ValidateIPaddress(ipaddress)
                             <input type="range" min="1" max="100" value="100" class="slider" id="range1">
                         </div>
                     </div>
+                   <div class="colors">
+                        <input type="color" id="tallybox1_colorPreview" /><label for="tallybox1_colorPreview">Tally 1: Preview (PVW) Color</label><br />
+                        <input type="color" id="tallybox1_colorProgram" /><label for="tallybox1_colorProgram">Tally 2: Program (PGM) Color</label><br />
+                        <input type="color" id="tallybox1_colorPreviewProgram" /><label for="tallybox1_colorPreviewProgram"> Preview + Program (PVW+PGM) Color</label><br />
+                   </div>
                 </div>
             </div>
             <div id="tallySettings2" class="divSquare divDisabled">
@@ -1882,6 +1913,11 @@ function ValidateIPaddress(ipaddress)
                             <input type="range" min="1" max="100" value="100" class="slider" id="range2">
                         </div>
                     </div>
+                   <div class="colors">
+                        <input type="color" id="tallybox2_colorPreview" /><label for="tallybox2_colorPreview">Tally 1: Preview (PVW) Color</label><br />
+                        <input type="color" id="tallybox2_colorProgram" /><label for="tallybox2_colorProgram">Tally 2: Program (PGM) Color</label><br />
+                        <input type="color" id="tallybox2_colorPreviewProgram" /><label for="tallybox2_colorPreviewProgram"> Preview + Program (PVW+PGM) Color</label><br />
+                   </div>
                 </div>
             </div>
             <div id="tallySettings3" class="divSquare divDisabled">
@@ -1914,6 +1950,11 @@ function ValidateIPaddress(ipaddress)
                             <input type="range" min="1" max="100" value="100" class="slider" id="range3">
                         </div>
                     </div>
+                   <div class="colors">
+                        <input type="color" id="tallybox3_colorPreview" /><label for="tallybox3_colorPreview">Tally 1: Preview (PVW) Color</label><br />
+                        <input type="color" id="tallybox3_colorProgram" /><label for="tallybox3_colorProgram">Tally 2: Program (PGM) Color</label><br />
+                        <input type="color" id="tallybox3_colorPreviewProgram" /><label for="tallybox3_colorPreviewProgram"> Preview + Program (PVW+PGM) Color</label><br />
+                   </div>
                 </div>
             </div>
             <div id="tallySettings4" class="divSquare divDisabled">
@@ -1946,16 +1987,14 @@ function ValidateIPaddress(ipaddress)
                             <input type="range" min="1" max="100" value="100" class="slider" id="range4">
                         </div>
                     </div>
+                   <div class="colors">
+                        <input type="color" id="tallybox4_colorPreview" /><label for="tallybox4_colorPreview">Tally 1: Preview (PVW) Color</label><br />
+                        <input type="color" id="tallybox4_colorProgram" /><label for="tallybox4_colorProgram">Tally 2: Program (PGM) Color</label><br />
+                        <input type="color" id="tallybox4_colorPreviewProgram" /><label for="tallybox4_colorPreviewProgram"> Preview + Program (PVW+PGM) Color</label><br />
+                   </div>
                 </div>
             </div>
             <div style='clear:both'></div>
-            <div id="OtherSettings" class="div2Square divDisabled">
-                <div class="div2SquareContainer">
-                    <input type="color" id="colorPreview" /><label for="colorPreview">Tally 1: Preview (PVW) Color</label><br />
-                    <input type="color" id="colorProgram" /><label for="colorProgram">Tally 2: Program (PGM) Color</label><br />
-                    <input type="color" id="colorPreviewProgram" /><label for="colorPreviewProgram"> Preview + Program (PVW+PGM) Color</label><br />
-                </div>
-            </div>
             <div id="UpdateSettings">
                 <div class="div2SquareContainer">
                     <button id="btnUpdateSettings" class="divDisabled">Update Tally Settings</button>
