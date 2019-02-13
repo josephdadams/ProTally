@@ -717,6 +717,11 @@ var RossGraphite_TallyFieldAddressLabels = [
     {address: 122, label: "ME 2 Clean"}
 ];
 
+var BitfocusCompanion_Sources = [
+    {address: "Enabled", label: "Enabled"},
+    {address: "Disabled", label: "Disabled"}
+];
+
 function onLoad()
 {   
     btnUpdateSettings = document.getElementById('btnUpdateSettings');
@@ -794,6 +799,7 @@ function onLoad()
             case "RossGraphite":
             case "BlackmagicATEM":
             case "OBSStudio":
+            case "BitfocusCompanion":
                 address1Value = document.getElementById("dropdown1").options[document.getElementById("dropdown1").selectedIndex].value;
                 address2Value = document.getElementById("dropdown2").options[document.getElementById("dropdown2").selectedIndex].value;
                 address3Value = document.getElementById("dropdown3").options[document.getElementById("dropdown3").selectedIndex].value;
@@ -989,6 +995,10 @@ function onLoad()
                 break;
             case "OBSStudio":
                 deviceAddressLabels = OBSStudio_Sources;
+                break;
+            case "BitfocusCompanion":
+                deviceAddressLabels = BitfocusCompanion_Sources;
+                break;
             default:
                 break;
         }
@@ -1114,6 +1124,7 @@ function onLoad()
         document.getElementById("divDeviceSettings_TSL31").style.display = 'none';
         document.getElementById("divDeviceSettings_BlackmagicATEM").style.display = 'none';
         document.getElementById("divDeviceSettings_OBSStudio").style.display = 'none';
+        document.getElementById("divDeviceSettings_BitfocusCompanion").style.display = 'none';
         
         switch (deviceSelected)
         {
@@ -1147,6 +1158,10 @@ function onLoad()
                 break;
             case "OBSStudio":
                 document.getElementById("divDeviceSettings_OBSStudio").style.display = 'inline';
+                useSpecificTallyFieldAddressLabels(deviceSelected);
+                break;
+            case "BitfocusCompanion":
+                document.getElementById("divDeviceSettings_BitfocusCompanion").style.display = 'inline';
                 useSpecificTallyFieldAddressLabels(deviceSelected);
                 break;
             default:
@@ -1237,6 +1252,7 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
                     btnUpdateDeviceSettings.style.backgroundColor = "#ffcc00";
                     btnUpdateDeviceSettings.innerHTML = "Connecting...";
                     DeviceInUse = deviceInUse;
+                    break;
                 case "BlackmagicATEM":
                     let BlackmagicATEMip = document.getElementById("txtBlackmagicATEMip").value;
                     let BlackmagicATEMport = document.getElementById("txtBlackmagicATEMport").value;
@@ -1272,6 +1288,14 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
                         DeviceInUse = deviceInUse;
                     }
                     break;
+                case "BitfocusCompanion":
+                    let companionListenPort = document.getElementById("txtBitfocusCompanionListenPort").value;
+                    ipc.send("UpdateStore-BitfocusCompanionSettings", companionListenPort);
+                    ipc.send("UpdateStore-DeviceInUse", deviceInUse);
+                    btnUpdateDeviceSettings.style.backgroundColor = "#ffcc00";
+                    btnUpdateDeviceSettings.innerHTML = "Connecting...";
+                    DeviceInUse = deviceInUse;
+                    break;
                 default:
                     break;
             }
@@ -1290,6 +1314,7 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
             case "RossGraphite":
             case "BlackmagicATEM":
             case "OBSStudio":
+            case "BitfocusCompanion":
                 assignTallyBoxDropDownValues(addressNumber, addressValue);       
                 break;
             default:
@@ -1444,6 +1469,7 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
         document.getElementById("divDeviceSettings_TSL31").style.display = 'none';
         document.getElementById("divDeviceSettings_BlackmagicATEM").style.display = 'none';
         document.getElementById("divDeviceSettings_OBSStudio").style.display = 'none';
+        document.getElementById("divDeviceSettings_BitfocusCompanion").style.display = 'none';
         
         ddlDevices.selectedIndex = 0;
         for(let i = 0; i < ddlDevices.options.length; i++)
@@ -1495,6 +1521,11 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
                 ipc.send("LoadStore-OBSStudioInfo");
                 useSpecificTallyFieldAddressLabels(deviceInUse);
                 break;
+            case "BitfocusCompanion":
+                document.getElementById("divDeviceSettings_BitfocusCompanion").style.display = 'inline';
+                ipc.send("LoadStore-BitfocusCompanionSettings");
+                useSpecificTallyFieldAddressLabels(deviceInUse);
+                break;
             default:
                 ddlDevices.selectedIndex = 0;
                 break;
@@ -1505,7 +1536,6 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
     
     ipc.on("DeviceConnected", function (event, value) {
         DeviceConnected = value;
-        console.log(DeviceInUse + ": Connected: " + DeviceConnected);
         if (value)
         {
             EnableTallyFields(true);
@@ -1555,6 +1585,10 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
                     break;
                 case "OBSStudio":
                     divDeviceStatus.innerHTML = "Listening for OBS data";
+                    btnUpdateDeviceSettings.innerHTML = "Stop Listening";
+                    break;
+                case "BitfocusCompanion":
+                    divDeviceStatus.innerHTML = "Listening for Companion data";
                     btnUpdateDeviceSettings.innerHTML = "Stop Listening";
                     break;
                 default:
@@ -1692,6 +1726,15 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
         }
     });
     
+    ipc.on("BitfocusCompanionSettings", function (event, port) {
+       let txtBitfocusCompanionListenPort = document.getElementById("txtBitfocusCompanionListenPort");
+       
+       if (port)
+       {
+           txtBitfocusCompanionListenPort.value = port;
+       }
+    });
+    
     ipc.on('TallyArray', function (event, tallyArray) {
        TallyArray = tallyArray;
     });
@@ -1714,7 +1757,6 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
 	    msgDateTimeString += msgDateTime.getHours() >= 12 ? "PM" : "AM";
                                     
            divNotifications.innerHTML += msgDateTimeString + " : " + NotificationArray[i].message + "<br />";
-           console.log(NotificationArray[i].message);
        }
        
        divNotifications.scrollTop = divNotifications.scrollHeight;
@@ -1808,6 +1850,7 @@ function ValidateIPaddress(ipaddress)
                             <option value="TSL3.1">Generic TSL 3.1 Device</option>
                             <option value="BlackmagicATEM">Blackmagic ATEM</option>
                             <option value="OBSStudio">OBS Studio</option>
+                            <option value="BitfocusCompanion">Bitfocus Companion</option>
                         </select><br />
                         <div id="divDeviceSettings_RossCarbonite" style="display:none;">
                         </div>
@@ -1830,10 +1873,13 @@ function ValidateIPaddress(ipaddress)
                                 <input type="text" id="txtBlackmagicATEMport" style="display:none;" size="5" />
                             </div>
                         </div>
-                        <div id="divDeviceSettings_OBSStudio">
+                        <div id="divDeviceSettings_OBSStudio" style="display:none;">
                             IP Address: <input type="text" id="txtOBSStudio_IP" size="15" /><br />
                             Port: <input type="text" id="txtOBSStudio_Port" size="5" /><br />
                             Password: <input type="password" id="txtOBSStudio_Password" size="10" />
+                        </div>
+                        <div id="divDeviceSettings_BitfocusCompanion" style="display:none;">
+                            Companion Listen Port: <input type="text" id="txtBitfocusCompanionListenPort" size="5" /><br />
                         </div>
                     </div>
                     <div id="divDeviceStatus">

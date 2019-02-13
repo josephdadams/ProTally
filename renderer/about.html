@@ -145,6 +145,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     </li>
                     <li>Blackmagic ATEM</li>
                     <li>OBS Studio</li>
+                    <li>Bitfocus Companion</li>
                 </ul>
             <i>Using a Ross Carbonite, Carbonite Black, Carbonite Black Solo, or Graphite Switcher:</i><br />
             <ul>
@@ -179,7 +180,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 <li>If your Blackmagic ATEM Switcher is not in the drop down list, it was not detected automatically on the network. Choose "manual entry" from the list and type in the IP address of your switcher.</li>
                 <li>Click "Connect".</li>
             </ul>
-            <b><i>Click "Disconnect" to stop listening for device tally data at any time.</i></b>
             <br />
             <i>Using OBS Studio:</i><br />
             <ul>
@@ -188,6 +188,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 <li>Enter the IP Address, Port, and Password you defined in the OBS Websocket settings.</li>
                 <li>Click "Connect".</li>
                 <li>ProTally can monitor any available source in OBS, whether it is a physical input via a capture card, or a virtual input like NDI, a browser window, color source, etc.</li>
+            </ul>
+            <br />
+            <i>Using Bitfocus Companion:</i><br />
+            <ul>
+                <li>In Companion, create a new module instance for ProTally, using the IP address of the computer running ProTally. You can create multiple instances if you need to control multiple computers running ProTally.</li>
+                <li>Specify the port Companion should send tally data to.</li>
+                <li>In ProTally, choose "Bitfocus Companion" in the device list at the top of the settings menu.</li>
+                <li>Enter a listen port that matches the port you chose in Companion. The default port is 9800.</li>
+                <li>Click "Connect".</li>
+                <li>Enable the ProTally windows you want to be controllable from Companion, and position them where desired.</li>
+                <li>ProTally will listen for data from Companion to show a Preview, Program, or Preview/Program box. You can also send a "Beacon" from Companion which will flash a box with a custom color at a custom rate.</li>
             </ul>
             <b><i>Click "Disconnect" to stop listening for device tally data at any time.</i></b>
             <br />
@@ -205,7 +216,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             <ul>
                 <li>Tally Windows will display on top of all other windows. To temporarily hide them, choose "Hide All Boxes" from the tray menu.</li>
                 <li>You can resize/reposition windows to fit where you would like them on the screen by choosing "Resize" from the Settings window for each Tally Box.</li>
-                <li>Preview, Program, and Preview+Program (when an input is set to both) colors can be customized. Some TSL devices will send Preview data in Tally 2 with Program in Tally 1, whereas ProTally expects the opposite. If this is the case, simply change the colors to match the state desired. Click "Update Tally Settings" to save color changes.</li>
+                <li>Preview, Program, and Preview+Program (when an input is set to both) colors can be customized for every tally window. Some TSL devices will send Preview data in Tally 2 with Program in Tally 1, whereas ProTally expects the opposite. If this is the case, simply change the colors to match the state desired. Click "Update Tally Settings" to save color changes.</li>
             </ul>
             </div>
             <div id="close"><button id="btnClose">Close</button></div>

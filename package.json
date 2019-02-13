@@ -1,6 +1,6 @@
 {
     "name": "ProTally",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "description": "Provides on-screen viewing of tally data. User can monitor status of up to 4 inputs in preview or program.",
     "keywords": [
         "util",
@@ -17,7 +17,9 @@
         "ross",
         "propresenter",
         "provideoserver",
-        "obs"
+        "obs",
+        "bitfocus",
+        "companion"
     ],
     "license": "MIT",
     "author": "Joseph Adams",

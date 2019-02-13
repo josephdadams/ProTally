@@ -230,6 +230,17 @@
               transform: translate(10px, -10px) rotate(180deg) skew(-10deg, -10deg);
             }
         }
+        
+        .beacon
+        {
+            animation:beacon 1000ms infinite alternate;
+        }
+        
+        @keyframes beacon
+        { 
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
       
       </style>
  <script>
@@ -245,9 +256,12 @@ var borderMode = true;
 
 var currentMode = null;
 
+var beaconRate = "1000"; //default beacon flashing rate in ms
+
 var colorPreview = "#00FF00";
 var colorProgram = "#FF0000";
 var colorPreviewProgram = "#FFCC00";
+var colorBeacon = "#FF00FF";
 
 var currentLabel = "";
 var showLabelMode = false;
@@ -304,12 +318,25 @@ function onLoad()
                         colorPreviewProgram = color;
                     }
                     break;
+                case "Beacon":
+                    if (color)
+                    {
+                        colorBeacon = color;
+                    }
+                    break;
                 default:
                     break;
             }
         }
         
         DrawBox();
+    });
+    
+    ipc.on('TallyBox-BeaconRate', function (event, rate) {
+        if (rate)
+        {
+            beaconRate = rate;
+        }
     });
     
     ipc.on('TallyBox-WindowNumber', function (event, number) {
@@ -409,6 +436,9 @@ function DrawBox()
         case "PreviewProgram":
             currentColor = colorPreviewProgram;
             break;
+        case "Beacon":
+            currentColor = colorBeacon;
+            break;
         default:
             currentColor = "#000000";
             break;
@@ -443,11 +473,28 @@ function DrawBox()
     if (((currentMode === "Clear") || (currentMode === "") || (currentMode === null)) && (inResizeMode === false))
     {
         document.getElementById("tallybox").style.opacity = "0";
+        Beacon_Deactivate();
+    }
+    else if (currentMode === "Beacon")
+    {
+        document.getElementById("tallybox").style.opacity = "" + (TransparencyValue / 100);
+        Beacon_Activate();
     }
     else 
-   {
+    {
+        Beacon_Deactivate();
         document.getElementById("tallybox").style.opacity = "" + (TransparencyValue / 100);
     }
+}
+
+function Beacon_Activate()
+{
+    document.getElementById("tallybox").style.animation = "beacon " + beaconRate + "ms infinite alternate";
+}
+
+function Beacon_Deactivate()
+{
+    document.getElementById("tallybox").style.animation = "";
 }
 </script>
     </head>

@@ -56,6 +56,10 @@ var ATEMSwitchers = []; //mdns/bonjour discovered list of ATEM switchers availab
 const OBSWebSocket = require('obs-websocket-js');
 var obs = null; // object variable
 
+//Bitfocus Companion Listener
+var net_listener = null;
+const defaultCompanionPort = 9800;
+
 //Device-Specific Arrays
 var tallySettingsArray = [];
 var useTallySettingsArray = false;
@@ -602,7 +606,7 @@ app.on('ready', () => {
    
     let deviceInUse = store.get("DeviceInUse"); // The last device that was used
     
-    //setUpDevice(deviceInUse); //auto starts/connects to the last device used
+    setUpDevice(deviceInUse); //auto starts/connects to the last device used
     
     //create default transparency values
     if (!(store.get("TallyBox1-TransparencyValue")))
@@ -667,6 +671,9 @@ function setUpDevice(deviceInUse)
             break;
         case "OBSStudio":
             setUpOBSStudioServer();
+            break;
+        case "BitfocusCompanion":
+            setUpBitfocusCompanionServer();
             break;
         default:
             notify("No Device Stored. You need to configure a device before you can continue.", true);
@@ -821,7 +828,7 @@ function stopTSLServer()
                 if (umd !== null)
                 {
                     umd.close(function () {
-                        umd.unref();
+                        //umd.unref();
                     });
                     umd = null;
                     notify("TSL 3.1 TCP Server Stopped.", true);
@@ -965,8 +972,8 @@ function createAtemDevice(atemIP)
             }
         });
 
-        ATEMdevice.on('inputTally', function(inputNumber, tallyState) {
-            processATEMTally(inputNumber, tallyState);
+        ATEMdevice.on('sourceTally', function(sourceNumber, tallyState) {
+            processATEMTally(sourceNumber, tallyState);
         });
     }
     catch(error)
@@ -1009,22 +1016,6 @@ function setUpOBSStudioServer()
             });
         });
         
-        /*obs.on('ConnectionOpened', function (data) {
-            if (settingsWindow !== null)
-            {
-                settingsWindow.webContents.send("OBSStudio_Authenticated", true);
-            }
-            UpdateDeviceConnected(true);
-            
-            obs.getSourcesList({}, function (err, data) {
-                console.log("Using callbacks:", err, data);
-                if (settingsWindow !== null)
-                {
-                    settingsWindow.webContents.send("OBSStudio-Sources", data.sources);
-                }
-            });
-        });*/
-        
         obs.on('ConnectionClosed', function (data) {
             UpdateDeviceConnected(false);
         });
@@ -1057,7 +1048,6 @@ function setUpOBSStudioServer()
             {
                 if (data.sources)
                 {
-                    //console.log(data);
                     processOBSTally(data.sources, "Preview");       
                 }
             }
@@ -1068,8 +1058,6 @@ function setUpOBSStudioServer()
             {
                 if (data.sources)
                 {
-                    //console.log("***PGM DATA***");
-                    //console.log(data);
                     processOBSTally(data.sources, "Program");       
                 }
             }
@@ -1094,11 +1082,67 @@ function stopOBSStudioServer()
     }
 }
 
+function setUpBitfocusCompanionServer()
+{
+    let listenPort = store.get("BitfocusCompanion_ListenPort");
+    if (!listenPort)
+    {
+        listenPort = defaultTSLListenPort; //use default TSL listen port if they didn't define one
+    }
+    
+    try
+    {
+        // Start a TCP Server
+        net_listener = net.createServer(function (socket) {
+            // Handle incoming messages
+            socket.on('data', function (data) {
+                var inString = data.toString('utf8');
+                var outArray = null;
+
+                outArray = JSON.parse(inString);
+                processBitfocusCompanionTally(outArray);
+            });
+
+            socket.on('close', function () {
+                notify("Connection closed from " + socket.remoteAddress + ":" + socket.remotePort, true);
+            });
+        }).listen(listenPort);
+        
+        UpdateDeviceConnected(true);
+        notify("Bitfocus Companion Listener Server started. Listening for data on TCP Port: " + listenPort, true);
+    }
+    catch (error)
+    {
+        notify("Bitfocus Companion Listener Server Error occurred: " + error, true);
+    }
+}
+
+function stopBitfocusCompanionServer()
+{
+    try
+    {       
+        if (net_listener !== null)
+        {
+            net_listener.close(function () {
+                //net_listener.unref();
+            });
+            net_listener = null;
+            notify("Bitfocus Companion Listener Server Stopped.", true);
+        }
+        UpdateDeviceConnected(false);
+    }
+    catch(error)
+    {
+        notify("Bitfocus Companion Listener Server Error occurred: " + error, true);
+    }
+}
+
 function stopAllServers()
 {
     stopTSLServer();
     stopATEMServer();
     stopOBSStudioServer();
+    stopBitfocusCompanionServer();
 }
 
 function stopATEMServer()
@@ -1112,6 +1156,8 @@ function stopATEMServer()
 
 function UpdateDeviceConnected(value)
 {
+    DeviceConnected = value;
+    
     if (settingsWindow !== null)
     {
         settingsWindow.webContents.send("DeviceConnected", value);
@@ -1416,6 +1462,7 @@ function tellTallyBoxWindow(tallyBoxWindowNumber, mode, label)
             case "Preview":
             case "Program":
             case "PreviewProgram":
+            case "Beacon":
                 createTallyBoxWindow(tallyBoxWindowNumber, mode, label);
                 break;
             case "Clear":
@@ -1455,21 +1502,21 @@ function notify(message, display)
     }
 }
 
-function processATEMTally(inputNumber, tallyState) // Process the data received from the ATEM
+function processATEMTally(sourceNumber, tallyState) // Process the data received from the ATEM
 {
     //build an object like the TSL module creates so we can use the same function to process it
     let tallyObj = {};
-    tallyObj.address = inputNumber;
+    tallyObj.address = sourceNumber;
     tallyObj.brightness = 1;
     tallyObj.tally1 = (tallyState.preview ? 1 : 0);
     tallyObj.tally2 = (tallyState.program ? 1 : 0);
     tallyObj.tally3 = 0;
     tallyObj.tally4 = 0;
     
-    let label = "Input " + inputNumber;
+    let label = "Source " + sourceNumber;
     for (let i = 0; i < TallySettings_BlackmagicATEM.length; i++)
     {
-        if (TallySettings_BlackmagicATEM[i].address === inputNumber)
+        if (TallySettings_BlackmagicATEM[i].address === sourceNumber)
         {
             label = TallySettings_BlackmagicATEM[i].label;
         }
@@ -1770,6 +1817,70 @@ function processOBSTally(sourceArray, tallyType)
         }
 
         processTSLTally(tallyAddressObj);
+    }
+}
+
+function processBitfocusCompanionTally(data)
+{
+    //tellTallyBoxWindow("4", mode, labelText);
+    //Preview, Program, Clear, Beacon
+    //send a label
+    //send a custom color
+    //ipc.on('TallyBox-Color'
+    //ipc.on('TallyBox-Mode'
+    //ipc.on('TallyBox-BeaconRate'
+    //ipc.on('TallyBox-Label',
+    
+    let windowNumber = data.windowNumber;
+    let address = store.get("TallyBox" + windowNumber + "-Address");
+    
+    let tallyBoxEnabled = (address === "Enabled") ? true : false;
+    
+    if (tallyBoxEnabled)
+    {
+        let mode = data.mode;
+        let label = data.label;
+        let color = data.color;
+        
+        switch(windowNumber)
+        {
+            case "1":
+                tallyBoxWindow1.webContents.send("TallyBox-Color", windowNumber, mode, color);
+                if (mode === "Beacon")
+                {
+                    tallyBoxWindow1.webContents.send("TallyBox-BeaconRate", data.beaconrate);
+                }
+                break;
+            case "2":
+                tallyBoxWindow2.webContents.send("TallyBox-Color", windowNumber, mode, color);
+                if (mode === "Beacon")
+                {
+                    tallyBoxWindow2.webContents.send("TallyBox-BeaconRate", data.beaconRate);
+                }
+                break;
+            case "3":
+                tallyBoxWindow3.webContents.send("TallyBox-Color", windowNumber, mode, color);
+                if (mode === "Beacon")
+                {
+                    tallyBoxWindow3.webContents.send("TallyBox-BeaconRate", data.beaconRate);
+                }
+                break;
+            case "4":
+                tallyBoxWindow4.webContents.send("TallyBox-Color", windowNumber, mode, color);
+                if (mode === "Beacon")
+                {
+                    tallyBoxWindow4.webContents.send("TallyBox-BeaconRate", data.beaconRate);
+                }
+                break;
+            default:
+                break;
+        }
+        
+        tellTallyBoxWindow(windowNumber, mode, label);
+    }
+    else
+    {
+        notify("Bitfocus Companion Tally information received for Box " + windowNumber + " but the box is currently disabled in ProTally.");
     }
 }
 
@@ -2311,7 +2422,6 @@ ipc.on("LoadStore-ShowLabels", function (event) {
 });
 
 ipc.on("LoadStore-Colors", function (event) {
-    console.log("Loading colors.");
    event.sender.send("TallyBox-Color", "1", "Preview", store.get('TallyBox1-Color-Preview'));
    event.sender.send("TallyBox-Color", "1", "Program", store.get('TallyBox1-Color-Program'));
    event.sender.send("TallyBox-Color", "1", "PreviewProgram", store.get('TallyBox1-Color-PreviewProgram'));
@@ -2344,6 +2454,10 @@ ipc.on("LoadStore-DeviceInUse", function (event) {
    event.sender.send("DeviceInUse", store.get("DeviceInUse")); 
 });
 
+ipc.on("LoadStore-DeviceConnected", function (event) {
+   event.sender.send("DeviceConnected", DeviceConnected); 
+});
+
 ipc.on("LoadStore-TSLinfo", function (event) {
    event.sender.send("TSLinfo", store.get("TSLListenPort"), defaultTSLListenPort, store.get("TSLProtocol"));
 });
@@ -2354,6 +2468,10 @@ ipc.on("LoadStore-BlackmagicATEMinfo", function (event) {
 
 ipc.on("LoadStore-OBSStudioInfo", function (event) {
    event.sender.send("OBSStudioInfo", store.get("OBSStudio_IP"), store.get("OBSStudio_Port"), store.get("OBSStudio_Password")); 
+});
+
+ipc.on("LoadStore-BitfocusCompanionSettings", function (event) {
+   event.sender.send("BitfocusCompanionSettings", store.get("BitfocusCompanion_ListenPort")); 
 });
 
 ipc.on("LoadStore-NotificationArray", function (event) {
@@ -2546,6 +2664,10 @@ ipc.on("UpdateStore-OBSStudioInfo", function (event, ip, port, password) {
    store.set("OBSStudio_Port", port);
    store.set("OBSStudio_Password", password);
    setUpOBSStudioServer();
+});
+
+ipc.on("UpdateStore-BitfocusCompanionSettings", function (event, port) {
+    store.set("BitfocusCompanion_ListenPort", port);
 });
 
 ipc.on("ShowResizer", function (event, tallyBoxWindowNumber) {
