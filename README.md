@@ -1,5 +1,5 @@
 # ProTally
-On-screen tally software for use with products like ProPresenter or ProVideoServer, enabling the operator to know when their source is visible on-air in a TSL 3.1 protocol environment, like a Ross Carbonite switcher.
+On-screen tally software for use with products like ProPresenter or ProVideoServer, enabling the operator to know when their source is visible on-air in a TSL 3.1 protocol environment, like a Ross Carbonite switcher. It also supports tally information from Blackmagic ATEM switchers, OBS Studio, or Bitfocus Companion.
 
 Copyright 2018 Joseph Adams.
 
@@ -79,6 +79,7 @@ On your Tally server (ImageVideo TSI 4000, etc.), configure a client with these 
 * Tally Boxes can either be displayed as transparent boxes with a color border, or as a filled-in box. The transparent box is turned on by default.
 * Tally Boxes can display the label, if the name is known and transmitted with the tally data.
 * To resize/position a tally box, click "Resize/Move" for that box. The Tally Box will appear on the screen. When you are finished, click "Save Window Position".
+* To use a blink(1) device with ProTally, it must be connected to the system prior to opening ProTally. Then, select it from the list for the Tally window you want to pair it with. You can choose to have it mirror the tally window, not use the blink(1) device at all, or only use the blink(1) device with no visible on-screen window.
 * Update all desired Tally Address fields and choose "Update Tally Settings" at the bottom of the menu to save the settings.
 
 ## Special Notes:
