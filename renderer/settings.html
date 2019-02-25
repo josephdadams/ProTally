@@ -66,8 +66,8 @@
     .tallyInput
     {
         position: absolute;
-        left: 10px;
-        top: 25px;
+        left: 5px;
+        top: 5px;
     }
     .tallyResize
     {
@@ -81,6 +81,12 @@
         left: 10px;
         top: 65px;
     }
+    .blinks
+    {
+        position: absolute;
+        left: 250px;
+        top: 70px;
+    }
     
 .onoffswitch {
     position: relative; width: 130px;
@@ -91,15 +97,15 @@
 }
 .onoffswitch-label {
     display: block; overflow: hidden; cursor: pointer;
-    border: 2px solid #E3E3E3; border-radius: 36px;
+    border: 2px solid #E3E3E3; border-radius: 20px;
 }
 .onoffswitch-inner {
     display: block; width: 200%; margin-left: -100%;
     transition: margin 0.3s ease-in 0s;
 }
 .onoffswitch-inner:before, .onoffswitch-inner:after {
-    display: block; float: left; width: 50%; height: 21px; padding: 0; line-height: 21px;
-    font-size: 16px; color: white; font-family: Arial, sans-serif; font-weight: bold;
+    display: block; float: left; width: 50%; height: 15px; padding: 0; line-height: 15px;
+    font-size: 12px; color: white; font-family: Arial, sans-serif; font-weight: bold;
     box-sizing: border-box;
 }
 .onoffswitch-inner-border:before {
@@ -129,7 +135,7 @@
     background: #A1A1A1;
     position: absolute; top: 0; bottom: 0;
     right: 106px;
-    border: 2px solid #E3E3E3; border-radius: 36px;
+    border: 2px solid #E3E3E3; border-radius: 20px;
     transition: all 0.3s ease-in 0s; 
 }
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
@@ -242,7 +248,7 @@
     -webkit-appearance: none;
     appearance: none;
     width: 25px;
-    height: 25px;
+    height: 15px;
     border-radius: 50%; 
     background: #A1A1A1;
     cursor: pointer;
@@ -267,6 +273,7 @@ var NotificationArray = [];
 
 var ATEMSwitchers = []; // global array of ATEM Switchers that have been discovered by the main process
 var OBSStudio_Sources = []; // global array of OBS Studio Sources that have been discovered
+var Blink1_Devices = []; // global array of Blink1 Devices connected to the local system
 
 var DeviceInUse = ""; // the device (Ross Carbonite, Blackmagic ATEM, Generic TSL, etc.) currently being used
 var DeviceConnected = false; //whether the device is currently connected or not
@@ -867,6 +874,24 @@ function onLoad()
         ipc.send("UpdateStore-Color", "4", "Program", tallybox4_colorProgram);
         ipc.send("UpdateStore-Color", "4", "PreviewProgram", tallybox4_colorPreviewProgram);
         
+        if (Blink1_Devices.length > 0)
+        {    
+            blink1Serial = document.getElementById("ddlBlinkDevices_1").options[document.getElementById("ddlBlinkDevices_1").selectedIndex].value;
+            blink2Serial = document.getElementById("ddlBlinkDevices_2").options[document.getElementById("ddlBlinkDevices_2").selectedIndex].value;
+            blink3Serial = document.getElementById("ddlBlinkDevices_3").options[document.getElementById("ddlBlinkDevices_3").selectedIndex].value;
+            blink4Serial = document.getElementById("ddlBlinkDevices_4").options[document.getElementById("ddlBlinkDevices_4").selectedIndex].value;
+
+            blink1Use = document.getElementById("ddlBlink1_Use").options[document.getElementById("ddlBlink1_Use").selectedIndex].value;
+            blink2Use = document.getElementById("ddlBlink2_Use").options[document.getElementById("ddlBlink2_Use").selectedIndex].value;
+            blink3Use = document.getElementById("ddlBlink3_Use").options[document.getElementById("ddlBlink3_Use").selectedIndex].value;
+            blink4Use = document.getElementById("ddlBlink4_Use").options[document.getElementById("ddlBlink4_Use").selectedIndex].value;
+
+            ipc.send("UpdateStore-Blink1Settings", "1", blink1Serial, blink1Use);
+            ipc.send("UpdateStore-Blink1Settings", "2", blink2Serial, blink2Use);
+            ipc.send("UpdateStore-Blink1Settings", "3", blink3Serial, blink3Use);
+            ipc.send("UpdateStore-Blink1Settings", "4", blink4Serial, blink4Use);
+        }
+        
         ipc.send("LoadStore-Addresses");
     });
     
@@ -1461,6 +1486,136 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
         useSpecificTallyFieldAddressLabels("OBSStudio");
     });
     
+    ipc.on("Blink1s", function (event, devices, tallybox_blinks) {
+       Blink1_Devices = devices;
+       //need to redraw interface if this array length > 0
+       if (Blink1_Devices.length > 0)
+       {
+           let spanBlink1_dropdown = document.getElementById("spanBlink1_dropdown");
+           let spanBlink2_dropdown = document.getElementById("spanBlink2_dropdown");
+           let spanBlink3_dropdown = document.getElementById("spanBlink3_dropdown");
+           let spanBlink4_dropdown = document.getElementById("spanBlink4_dropdown");
+           
+           let ddlBlinkDevices_1 = document.createElement("select");
+           let ddlBlinkDevices_2 = document.createElement("select");
+           let ddlBlinkDevices_3 = document.createElement("select");
+           let ddlBlinkDevices_4 = document.createElement("select");
+           
+           ddlBlinkDevices_1.id = "ddlBlinkDevices_1";
+           ddlBlinkDevices_2.id = "ddlBlinkDevices_2";
+           ddlBlinkDevices_3.id = "ddlBlinkDevices_3";
+           ddlBlinkDevices_4.id = "ddlBlinkDevices_4";
+           
+           let ddlBlink1Use = document.getElementById("ddlBlink1_Use");
+           let ddlBlink2Use = document.getElementById("ddlBlink2_Use");
+           let ddlBlink3Use = document.getElementById("ddlBlink3_Use");
+           let ddlBlink4Use = document.getElementById("ddlBlink4_Use");
+           
+            for (let i = 0; i < Blink1_Devices.length; i++)
+            {
+                let optionEl = document.createElement("option");
+                optionEl.value = Blink1_Devices[i];
+                optionEl.text = (i+1) + ": " + Blink1_Devices[i];
+                if (optionEl.value.toString() === tallybox_blinks[0].serial.toString())
+                {
+                    optionEl.selected = true;
+                }
+                ddlBlinkDevices_1.add(optionEl);
+            }
+            
+            for (let i = 0; i < ddlBlink1Use.options.length; i++)
+            {
+                if (ddlBlink1Use.options[i].value === tallybox_blinks[0].use.toString())
+                {
+                    ddlBlink1Use.options.selected = true;
+                    break;
+                }
+            }
+            
+            for (let i = 0; i < Blink1_Devices.length; i++)
+            {
+                let optionEl = document.createElement("option");
+                optionEl.value = Blink1_Devices[i];
+                optionEl.text = (i+1) + ": " + Blink1_Devices[i];
+                if (optionEl.value.toString() === tallybox_blinks[1].serial.toString())
+                {
+                    optionEl.selected = true;
+                }
+                ddlBlinkDevices_2.add(optionEl);
+            }
+            
+            for (let i = 0; i < ddlBlink2Use.options.length; i++)
+            {
+                if (ddlBlink1Use.options[i].value === tallybox_blinks[1].use.toString())
+                {
+                    ddlBlink1Use.options.selected = true;
+                    break;
+                }
+            }
+            
+            for (let i = 0; i < Blink1_Devices.length; i++)
+            {
+                let optionEl = document.createElement("option");
+                optionEl.value = Blink1_Devices[i];
+                optionEl.text = (i+1) + ": " + Blink1_Devices[i];
+                if (optionEl.value.toString() === tallybox_blinks[2].serial.toString())
+                {
+                    optionEl.selected = true;
+                }
+                ddlBlinkDevices_3.add(optionEl);
+            }
+            
+            for (let i = 0; i < ddlBlink3Use.options.length; i++)
+            {
+                if (ddlBlink1Use.options[i].value === tallybox_blinks[2].use.toString())
+                {
+                    ddlBlink1Use.options.selected = true;
+                    break;
+                }
+            }
+            
+            for (let i = 0; i < Blink1_Devices.length; i++)
+            {
+                let optionEl = document.createElement("option");
+                optionEl.value = Blink1_Devices[i];
+                optionEl.text = (i+1) + ": " + Blink1_Devices[i];
+                if (optionEl.value.toString() === tallybox_blinks[3].serial.toString())
+                {
+                    optionEl.selected = true;
+                }
+                ddlBlinkDevices_4.add(optionEl);
+            }
+            
+            for (let i = 0; i < ddlBlink4Use.options.length; i++)
+            {
+                if (ddlBlink1Use.options[i].value === tallybox_blinks[3].use.toString())
+                {
+                    ddlBlink1Use.options.selected = true;
+                    break;
+                }
+            }
+            
+            spanBlink1_dropdown.innerHTML = "";
+            spanBlink1_dropdown.appendChild(ddlBlinkDevices_1);
+            
+            spanBlink2_dropdown.innerHTML = "";
+            spanBlink2_dropdown.appendChild(ddlBlinkDevices_2);
+            
+            spanBlink3_dropdown.innerHTML = "";
+            spanBlink3_dropdown.appendChild(ddlBlinkDevices_3);
+            
+            spanBlink4_dropdown.innerHTML = "";
+            spanBlink4_dropdown.appendChild(ddlBlinkDevices_4);
+       }
+       else
+       {
+           document.getElementById("tallyBlinkSettings1").style.display = 'none';
+           document.getElementById("tallyBlinkSettings2").style.display = 'none';
+           document.getElementById("tallyBlinkSettings3").style.display = 'none';
+           document.getElementById("tallyBlinkSettings4").style.display = 'none';
+       }
+    });
+    
     ipc.on('DeviceInUse', function (event, deviceInUse) {
         document.getElementById("divDeviceSettings_RossCarbonite").style.display = 'none';
         document.getElementById("divDeviceSettings_RossCarboniteBlack").style.display = 'none';
@@ -1769,6 +1924,7 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
     ipc.send('LoadStore-Colors');
     ipc.send('LoadStore-ResizeModes');
     ipc.send('LoadStore-ATEMSwitchers');
+    ipc.send('LoadStore-Blink1s');
     ipc.send('LoadStore-DeviceInUse');
     ipc.send('LoadStore-DeviceConnected');
     ipc.send('LoadStore-NotificationArray');
@@ -1918,15 +2074,23 @@ function ValidateIPaddress(ipaddress)
                             </label>
                         </div>
                         <div class="slidercontainer">
-                            <span style="position: absolute; top: 50px; right: 30px;">Tally Opacity</span>
+                            <span style="position: absolute; top: 40px; right: 30px;">Tally Opacity</span>
                             <input type="range" min="1" max="100" value="100" class="slider" id="range1">
                         </div>
                     </div>
                    <div class="colors">
-                        <input type="color" id="tallybox1_colorPreview" /><label for="tallybox1_colorPreview">Tally 1: Preview (PVW) Color</label><br />
-                        <input type="color" id="tallybox1_colorProgram" /><label for="tallybox1_colorProgram">Tally 2: Program (PGM) Color</label><br />
-                        <input type="color" id="tallybox1_colorPreviewProgram" /><label for="tallybox1_colorPreviewProgram"> Preview + Program (PVW+PGM) Color</label><br />
+                        <input type="color" id="tallybox1_colorPreview" /><label for="tallybox1_colorPreview">Tally 1: Preview (PVW)</label><br />
+                        <input type="color" id="tallybox1_colorProgram" /><label for="tallybox1_colorProgram">Tally 2: Program (PGM)</label><br />
+                        <input type="color" id="tallybox1_colorPreviewProgram" /><label for="tallybox1_colorPreviewProgram"> Preview + Program (PVW+PGM)</label><br />
                    </div>
+                    <div class="blinks" id="tallyBlinkSettings1">
+                        blink(1) Device:<br /><span id="spanBlink1_dropdown"></span><br />
+                        Use:<select id="ddlBlink1_Use">
+                            <option value="both" selected>Both</option>
+                            <option value="window-only">Window Only</option>
+                            <option value="blink1-only">blink(1) Only</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div id="tallySettings2" class="divSquare divDisabled">
@@ -1955,15 +2119,23 @@ function ValidateIPaddress(ipaddress)
                             </label>
                         </div>
                         <div class="slidercontainer">
-                            <span style="position: absolute; top: 50px; right: 30px;">Tally Opacity</span>
+                            <span style="position: absolute; top: 40px; right: 30px;">Tally Opacity</span>
                             <input type="range" min="1" max="100" value="100" class="slider" id="range2">
                         </div>
                     </div>
                    <div class="colors">
-                        <input type="color" id="tallybox2_colorPreview" /><label for="tallybox2_colorPreview">Tally 1: Preview (PVW) Color</label><br />
-                        <input type="color" id="tallybox2_colorProgram" /><label for="tallybox2_colorProgram">Tally 2: Program (PGM) Color</label><br />
-                        <input type="color" id="tallybox2_colorPreviewProgram" /><label for="tallybox2_colorPreviewProgram"> Preview + Program (PVW+PGM) Color</label><br />
+                        <input type="color" id="tallybox2_colorPreview" /><label for="tallybox2_colorPreview">Tally 1: Preview (PVW)</label><br />
+                        <input type="color" id="tallybox2_colorProgram" /><label for="tallybox2_colorProgram">Tally 2: Program (PGM)</label><br />
+                        <input type="color" id="tallybox2_colorPreviewProgram" /><label for="tallybox2_colorPreviewProgram"> Preview + Program (PVW+PGM)</label><br />
                    </div>
+                    <div class="blinks" id="tallyBlinkSettings2">
+                        blink(1) Device:<br /><span id="spanBlink2_dropdown"></span><br />
+                        Use:<select id="ddlBlink2_Use">
+                            <option value="both" selected>Both</option>
+                            <option value="window-only">Window Only</option>
+                            <option value="blink1-only">blink(1) Only</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div id="tallySettings3" class="divSquare divDisabled">
@@ -1992,15 +2164,23 @@ function ValidateIPaddress(ipaddress)
                             </label>
                         </div>
                         <div class="slidercontainer">
-                            <span style="position: absolute; top: 50px; right: 30px;">Tally Opacity</span>
+                            <span style="position: absolute; top: 40px; right: 30px;">Tally Opacity</span>
                             <input type="range" min="1" max="100" value="100" class="slider" id="range3">
                         </div>
                     </div>
                    <div class="colors">
-                        <input type="color" id="tallybox3_colorPreview" /><label for="tallybox3_colorPreview">Tally 1: Preview (PVW) Color</label><br />
-                        <input type="color" id="tallybox3_colorProgram" /><label for="tallybox3_colorProgram">Tally 2: Program (PGM) Color</label><br />
-                        <input type="color" id="tallybox3_colorPreviewProgram" /><label for="tallybox3_colorPreviewProgram"> Preview + Program (PVW+PGM) Color</label><br />
+                        <input type="color" id="tallybox3_colorPreview" /><label for="tallybox3_colorPreview">Tally 1: Preview (PVW)</label><br />
+                        <input type="color" id="tallybox3_colorProgram" /><label for="tallybox3_colorProgram">Tally 2: Program (PGM)</label><br />
+                        <input type="color" id="tallybox3_colorPreviewProgram" /><label for="tallybox3_colorPreviewProgram"> Preview + Program (PVW+PGM)</label><br />
                    </div>
+                    <div class="blinks" id="tallyBlinkSettings3">
+                        blink(1) Device:<br /><span id="spanBlink3_dropdown"></span><br />
+                        Use:<select id="ddlBlink3_Use">
+                            <option value="both" selected>Both</option>
+                            <option value="window-only">Window Only</option>
+                            <option value="blink1-only">blink(1) Only</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div id="tallySettings4" class="divSquare divDisabled">
@@ -2029,15 +2209,23 @@ function ValidateIPaddress(ipaddress)
                             </label>
                         </div>
                         <div class="slidercontainer">
-                            <span style="position: absolute; top: 50px; right: 30px;">Tally Opacity</span>
+                            <span style="position: absolute; top: 40px; right: 30px;">Tally Opacity</span>
                             <input type="range" min="1" max="100" value="100" class="slider" id="range4">
                         </div>
                     </div>
                    <div class="colors">
-                        <input type="color" id="tallybox4_colorPreview" /><label for="tallybox4_colorPreview">Tally 1: Preview (PVW) Color</label><br />
-                        <input type="color" id="tallybox4_colorProgram" /><label for="tallybox4_colorProgram">Tally 2: Program (PGM) Color</label><br />
-                        <input type="color" id="tallybox4_colorPreviewProgram" /><label for="tallybox4_colorPreviewProgram"> Preview + Program (PVW+PGM) Color</label><br />
+                        <input type="color" id="tallybox4_colorPreview" /><label for="tallybox4_colorPreview">Tally 1: Preview (PVW)</label><br />
+                        <input type="color" id="tallybox4_colorProgram" /><label for="tallybox4_colorProgram">Tally 2: Program (PGM)</label><br />
+                        <input type="color" id="tallybox4_colorPreviewProgram" /><label for="tallybox4_colorPreviewProgram"> Preview + Program (PVW+PGM)</label><br />
                    </div>
+                    <div class="blinks" id="tallyBlinkSettings4">
+                        blink(1) Device:<br /><span id="spanBlink4_dropdown"></span><br />
+                        Use:<select id="ddlBlink4_Use">
+                            <option value="both" selected>Both</option>
+                            <option value="window-only">Window Only</option>
+                            <option value="blink1-only">blink(1) Only</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div style='clear:both'></div>
