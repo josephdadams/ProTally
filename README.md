@@ -1,7 +1,7 @@
 # ProTally
 On-screen tally software for use with products like ProPresenter or ProVideoServer, enabling the operator to know when their source is visible on-air in a TSL 3.1 protocol environment, like a Ross Carbonite switcher. It also supports tally information from Blackmagic ATEM switchers, OBS Studio, or Bitfocus Companion.
 
-Copyright 2018 Joseph Adams.
+Copyright 2019 Joseph Adams.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
