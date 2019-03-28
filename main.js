@@ -1,5 +1,5 @@
 /* 
- Copyright 2018 Joseph Adams. www.techministry.blog.
+ Copyright 2019 Joseph Adams. www.techministry.blog.
  
  Permission is hereby granted, free of charge, to any person obtaining a copy of this software
  and associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -65,6 +65,10 @@ const Blink1 = require('node-blink1');
 var Blink1_Devices = [];
 var Blink1_Bindings = [];
 var Blink1_Colors = [];
+
+//Roland Smart Tally
+const request = require('request');
+var rolandTimer = null;
 
 //Device-Specific Arrays
 var tallySettingsArray = [];
@@ -682,12 +686,15 @@ function setUpDevice(deviceInUse)
 		case "BitfocusCompanion":
 			setUpBitfocusCompanionServer();
 			break;
+		case "RolandV60HD":
+			setUpRolandV60HDServer();
+			break;
 		default:
 			notify("No Device Stored. You need to configure a device before you can continue.", true);
 			break;
 	}
 
-	console.log("Device In Use: *" + DeviceInUse + "*");
+	notify("Device In Use: " + DeviceInUse, false);
 }
 
 function quitApp()
@@ -727,7 +734,7 @@ function quitApp()
 		}
 	} catch (error)
 	{
-		console.log(error);
+		notify(error, false);
 	}
 
 	app.quit();
@@ -814,7 +821,7 @@ function setUpTSLServer_TCP()
 
 function setUpTSLServer()
 {
-	console.log("starting up TSL Server");
+	notify("Starting up TSL Server.", false);
 	let protocol = store.get("TSLProtocol");
 
 	if (!protocol)
@@ -1006,16 +1013,16 @@ function setUpOBSStudioServer()
 		let password = store.get("OBSStudio_Password");
 
 		obs.on('error', err => {
-			console.log('OBS socket error:', err);
+			notify('OBS socket error: ' + err, false);
 		});
 
 		obs.onConnectionOpened(() => {
-			console.log('Connection Opened');
+			notify('OBS Connection Opened.', false);
 			UpdateDeviceConnected(true);
 
 			// Send some requests.
 			obs.getSourcesList({}, (err, data) => {
-				console.log("Using callbacks to get sources:", err, data);
+				notify("Getting OBS Sources.", false);
 				if (data)
 				{
 					if (data.sources)
@@ -1034,19 +1041,7 @@ function setUpOBSStudioServer()
 		});
 
 		obs.on('AuthenticationSuccess', function (data) {
-			/*if (settingsWindow !== null)
-			 {
-			 settingsWindow.webContents.send("OBSStudio_Authenticated", true);
-			 }
-			 UpdateDeviceConnected(true);
-			 
-			 obs.getSourcesList({}, function (err, data) {
-			 console.log("Using callbacks:", err, data);
-			 if (settingsWindow !== null)
-			 {
-			 settingsWindow.webContents.send("OBSStudio-Sources", data.sources);
-			 }
-			 });*/
+			notify("OBS Authenticated.", false);
 		});
 
 		obs.on('AuthenticationFailure', function (data) {
@@ -1054,6 +1049,8 @@ function setUpOBSStudioServer()
 			{
 				settingsWindow.webContents.send("OBSStudio_Authenticated", false);
 			}
+			notify("Invalid OBS Password.", false);
+			UpdateDeviceConnected(false);
 		});
 
 		obs.on('PreviewSceneChanged', function (data) {
@@ -1077,12 +1074,11 @@ function setUpOBSStudioServer()
 		});
 
 		obs.connect({address: ip + ":" + port, password: password}, function (data) {
-			console.log("CONNECTED TO OBS");
-			console.log(data);
+			notify("Connected to OBS.", false);
 		});
 	} catch (error)
 	{
-		console.log(error);
+		notify("OBS Error: " + error, false);
 	}
 }
 
@@ -1147,12 +1143,109 @@ function stopBitfocusCompanionServer()
 	}
 }
 
+function setUpRolandV60HDServer()
+{
+	//grabs all four tally box window addresses and starts polling the Roland for their status
+	//poll every 500ms
+	
+	let address1 = store.get("TallyBox1-Address");
+	let address2 = store.get("TallyBox2-Address");
+	let address3 = store.get("TallyBox3-Address");
+	let address4 = store.get("TallyBox4-Address");
+
+	if (!address1)
+	{
+		address1 = "";
+	}
+
+	if (!address2)
+	{
+		address2 = "";
+	}
+
+	if (!address3)
+	{
+		address3 = "";
+	}
+
+	if (!address4)
+	{
+		address4 = "";
+	}
+	
+	UpdateDeviceConnected(true);
+	
+	rolandTimer = setInterval(getRolandSmartTallies, 500, address1, address2, address3, address4);
+}
+
+function getRolandSmartTallies(address1, address2, address3, address4)
+{
+	if ((address1 !== "") && (address1 !== "0"))
+	{
+		getRolandSmartTally(address1);
+	}
+	
+	if ((address2 !== "") && (address2 !== "0"))
+	{
+		getRolandSmartTally(address2);
+	}
+	
+	if ((address3 !== "") && (address3 !== "0"))
+	{
+		getRolandSmartTally(address3);
+	}
+	
+	if ((address4 !== "") && (address4 !== "0"))
+	{
+		getRolandSmartTally(address4);
+	}
+}
+
+function getRolandSmartTally(address)
+{
+	let ipAddress = store.get("RolandV60HD_IPAddress");
+	
+	if (ipAddress)
+	{
+		var options = {
+			host: ipAddress,
+			port: 80,
+			path: `/tally/${address}/status`
+		};
+
+		request(`http://${ipAddress}/tally/${address}/status`, function (error, response, body) {
+			if (error) {
+				notify.log("Roland Smart Tally Error: " + error, false);
+			}
+			else {
+				processRolandV60HDTally(address, body);
+			}
+		});
+	}
+}
+
+function stopRolandV60HDServer()
+{
+	//stops all HTTP requests for tally status updates
+	if (rolandTimer !== null)
+	{
+		clearInterval(rolandTimer);
+		rolandTimer = null;
+	}
+}
+
 function stopAllServers()
 {
 	stopTSLServer();
 	stopATEMServer();
 	stopOBSStudioServer();
 	stopBitfocusCompanionServer();
+	stopRolandV60HDServer();
+	
+	tallyBox1_currentState = "Clear";
+	tallyBox2_currentState = "Clear";
+	tallyBox3_currentState = "Clear";
+	tallyBox4_currentState = "Clear";
 }
 
 function stopATEMServer()
@@ -1220,7 +1313,7 @@ function createTallyBoxWindow1() // Tally Box Window 1
 {
 	if (tallyBoxWindow1 === null)
 	{
-		tallyBoxWindow1 = new BrowserWindow({x: tallyBoxWindow1State.x, y: tallyBoxWindow1State.y, width: tallyBoxWindow1State.width, height: tallyBoxWindow1State.height, show: true, frame: false, transparent: true});
+		tallyBoxWindow1 = new BrowserWindow({x: tallyBoxWindow1State.x, y: tallyBoxWindow1State.y, width: tallyBoxWindow1State.width, height: tallyBoxWindow1State.height, show: true, frame: false, transparent: false});
 		tallyBoxWindow1.setAlwaysOnTop(true, "floating", 1);
 		tallyBoxWindow1.setHasShadow(false);
 		tallyBoxWindow1.setIgnoreMouseEvents(true);
@@ -1481,35 +1574,37 @@ function showAllTallyBoxes()
 function tellTallyBoxWindow(tallyBoxWindowNumber, mode, label)
 {
 	let blinkUse = store.get("TallyBox" + tallyBoxWindowNumber + "-Blink1-Use");
-
-	switch (blinkUse)
+	
+	if ((blinkUse !== "both") && (blinkUse !== "window-only") && (blinkUse !== "blink1-only"))
 	{
-		case "both":
-			tellBlink(tallyBoxWindowNumber, mode, null, null);
-		case "window-only":
-			if (!hiddenMode)
+		blinkUse = "window-only";
+		store.set("TallyBox" + tallyBoxWindowNumber + "-Blink1-Use", blinkUse);
+	}
+	
+	if ((blinkUse === "both") || (blinkUse === "blink1-only"))
+	{
+		tellBlink(tallyBoxWindowNumber, mode, null, null);
+	}
+	
+	if ((blinkUse === "both") || (blinkUse === "window-only"))
+	{
+		if (!hiddenMode)
+		{
+			switch (mode)
 			{
-				switch (mode)
-				{
-					case "Preview":
-					case "Program":
-					case "PreviewProgram":
-					case "Beacon":
-						createTallyBoxWindow(tallyBoxWindowNumber, mode, label);
-						break;
-					case "Clear":
-						closeTallyBoxWindow(tallyBoxWindowNumber);
-						break;
-					default:
-						break;
-				}
+				case "Preview":
+				case "Program":
+				case "PreviewProgram":
+				case "Beacon":
+					createTallyBoxWindow(tallyBoxWindowNumber, mode, label);
+					break;
+				case "Clear":
+					closeTallyBoxWindow(tallyBoxWindowNumber);
+					break;
+				default:
+					break;
 			}
-			break;
-		case "blink1-only":
-			tellBlink(tallyBoxWindowNumber, mode, null, null);
-			break;
-		default:
-			break;
+		}
 	}
 }
 
@@ -2025,15 +2120,6 @@ function processOBSTally(sourceArray, tallyType)
 
 function processBitfocusCompanionTally(data)
 {
-	//tellTallyBoxWindow("4", mode, labelText);
-	//Preview, Program, Clear, Beacon
-	//send a label
-	//send a custom color
-	//ipc.on('TallyBox-Color'
-	//ipc.on('TallyBox-Mode'
-	//ipc.on('TallyBox-BeaconRate'
-	//ipc.on('TallyBox-Label',
-
 	let windowNumber = data.windowNumber;
 	let address = store.get("TallyBox" + windowNumber + "-Address");
 
@@ -2106,6 +2192,37 @@ function processBitfocusCompanionTally(data)
 	{
 		notify("Bitfocus Companion Tally information received for Box " + windowNumber + " but the box is currently disabled in ProTally.");
 	}
+}
+
+function processRolandV60HDTally(address, value)
+{
+	let tallyAddressObj = {};
+	tallyAddressObj.address = address;
+	tallyAddressObj.label = "Input " + address;
+	tallyAddressObj.tally4 = 0;
+	tallyAddressObj.tally3 = 0;
+	tallyAddressObj.tally2 = 0;
+	tallyAddressObj.tally1 = 0;
+	
+	switch(value)
+	{
+		case "onair":
+			tallyAddressObj.tally2 = 1;
+			tallyAddressObj.tally1 = 0;
+			break;
+		case "selected":
+			tallyAddressObj.tally2 = 0;
+			tallyAddressObj.tally1 = 1;
+			break;
+		case "unselected":
+		default:
+			tallyAddressObj.tally2 = 0;
+			tallyAddressObj.tally1 = 0;
+			break;
+	}
+	
+	processTSLTally(tallyAddressObj);
+	
 }
 
 function checkMainTallyValue(tallyObj, addressNumber)
@@ -2719,6 +2836,10 @@ ipc.on("LoadStore-BitfocusCompanionSettings", function (event) {
 	event.sender.send("BitfocusCompanionSettings", store.get("BitfocusCompanion_ListenPort"));
 });
 
+ipc.on("LoadStore-RolandV60HDSettings", function (event) {
+	event.sender.send("RolandV60HDSettings", store.get("RolandV60HD_IPAddress"));
+});
+
 ipc.on("LoadStore-NotificationArray", function (event) {
 	event.sender.send("NotificationArray", notificationArray);
 });
@@ -2754,14 +2875,14 @@ ipc.on("UpdateStore-TallyBoxTransparency", function (event, tallyBoxWindowNumber
 	}
 });
 
-ipc.on("UpdateStore-TallyBoxAddress", function (event, addressNumber, addressValue) {
-	if (store.get("TallyBox" + addressNumber + "-Address") !== addressValue)
+ipc.on("UpdateStore-TallyBoxAddress", function (event, windowNumber, addressValue) {
+	if (store.get("TallyBox" + windowNumber + "-Address") !== addressValue)
 	{
-		closeTallyBoxWindow(addressNumber);
+		closeTallyBoxWindow(windowNumber);
 	}
-	store.set("TallyBox" + addressNumber + "-Address", addressValue);
+	store.set("TallyBox" + windowNumber + "-Address", addressValue);
 
-	switch (addressNumber)
+	switch (windowNumber)
 	{
 		case "1":
 			TallyWatch1 = {};
@@ -2784,15 +2905,15 @@ ipc.on("UpdateStore-TallyBoxAddress", function (event, addressNumber, addressVal
 	if (addressValue.toString() === "0")
 	{
 		hideTallyBoxWindow = true;
-		notify("Tally Box " + addressNumber + " Address set to 0.", false);
+		notify("Tally Box " + windowNumber + " Address set to 0.", false);
 	} else
 	{
-		notify("Tally Box " + addressNumber + " Address set to: " + addressValue, false);
+		notify("Tally Box " + windowNumber + " Address set to: " + addressValue, false);
 	}
 
 	if (hideTallyBoxWindow)
 	{
-		closeTallyBoxWindow(addressNumber);
+		closeTallyBoxWindow(windowNumber);
 	}
 });
 
@@ -2914,9 +3035,22 @@ ipc.on("UpdateStore-BitfocusCompanionSettings", function (event, port) {
 	store.set("BitfocusCompanion_ListenPort", port);
 });
 
+ipc.on("UpdateStore-RolandV60HDSettings", function (event, ipaddress) {
+	store.set("RolandV60HD_IPAddress", ipaddress);
+});
+
 ipc.on("UpdateStore-Blink1Settings", function (event, tallyBoxWindowNumber, blinkSerial, blinkUse) {
 	store.set("TallyBox" + tallyBoxWindowNumber + "-Blink1-Serial", blinkSerial);
 	store.set("TallyBox" + tallyBoxWindowNumber + "-Blink1-Use", blinkUse); //both, window-only, blink1-only
+});
+
+ipc.on("RestartRolandTimer", function (event) {
+	stopRolandV60HDServer();
+	tallyBox1_currentState = "Clear";
+	tallyBox2_currentState = "Clear";
+	tallyBox3_currentState = "Clear";
+	tallyBox4_currentState = "Clear";
+	setUpRolandV60HDServer();
 });
 
 ipc.on("ShowResizer", function (event, tallyBoxWindowNumber) {

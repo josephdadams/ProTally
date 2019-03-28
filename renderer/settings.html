@@ -4,14 +4,15 @@
       <meta charset="UTF-8">
       <title>ProTally Settings</title>
       <style>
-          body {
-              background-color: #eeeeee;
-              padding: 5px;
-              -webkit-user-select: none;
-              -webkit-app-region: drag;
-              font-family: Arial, sans-serif;
-              font-size: 12px;
-          }
+    body
+    {
+        background-color: #eeeeee;
+        padding: 5px;
+        -webkit-user-select: none;
+        -webkit-app-region: drag;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+    }
 
     .divSquare
     {
@@ -729,6 +730,18 @@ var BitfocusCompanion_Sources = [
     {address: "Disabled", label: "Disabled"}
 ];
 
+var RolandV60HD_Sources = [
+    {address: 0, label: "Disabled"},
+    {address: 1, label: "Input 1"},
+    {address: 2, label: "Input 2"},
+    {address: 3, label: "Input 3"},
+    {address: 4, label: "Input 4"},
+    {address: 5, label: "Input 5"},
+    {address: 6, label: "Input 6"},
+    {address: 7, label: "Input 7"},
+    {address: 8, label: "Input 8"}
+]
+
 function onLoad()
 {   
     btnUpdateSettings = document.getElementById('btnUpdateSettings');
@@ -807,6 +820,7 @@ function onLoad()
             case "BlackmagicATEM":
             case "OBSStudio":
             case "BitfocusCompanion":
+            case "RolandV60HD":
                 address1Value = document.getElementById("dropdown1").options[document.getElementById("dropdown1").selectedIndex].value;
                 address2Value = document.getElementById("dropdown2").options[document.getElementById("dropdown2").selectedIndex].value;
                 address3Value = document.getElementById("dropdown3").options[document.getElementById("dropdown3").selectedIndex].value;
@@ -890,6 +904,12 @@ function onLoad()
             ipc.send("UpdateStore-Blink1Settings", "2", blink2Serial, blink2Use);
             ipc.send("UpdateStore-Blink1Settings", "3", blink3Serial, blink3Use);
             ipc.send("UpdateStore-Blink1Settings", "4", blink4Serial, blink4Use);
+        }
+        
+        if (DeviceInUse === "RolandV60HD")
+        {
+            //restart the timer
+            ipc.send("RestartRolandTimer");
         }
         
         ipc.send("LoadStore-Addresses");
@@ -1024,6 +1044,8 @@ function onLoad()
             case "BitfocusCompanion":
                 deviceAddressLabels = BitfocusCompanion_Sources;
                 break;
+            case "RolandV60HD":
+                deviceAddressLabels = RolandV60HD_Sources;
             default:
                 break;
         }
@@ -1150,6 +1172,7 @@ function onLoad()
         document.getElementById("divDeviceSettings_BlackmagicATEM").style.display = 'none';
         document.getElementById("divDeviceSettings_OBSStudio").style.display = 'none';
         document.getElementById("divDeviceSettings_BitfocusCompanion").style.display = 'none';
+        document.getElementById("divDeviceSettings_RolandV60HD").style.display = 'none';
         
         switch (deviceSelected)
         {
@@ -1187,6 +1210,10 @@ function onLoad()
                 break;
             case "BitfocusCompanion":
                 document.getElementById("divDeviceSettings_BitfocusCompanion").style.display = 'inline';
+                useSpecificTallyFieldAddressLabels(deviceSelected);
+                break;
+            case "RolandV60HD":
+                document.getElementById("divDeviceSettings_RolandV60HD").style.display = 'inline';
                 useSpecificTallyFieldAddressLabels(deviceSelected);
                 break;
             default:
@@ -1321,6 +1348,14 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
                     btnUpdateDeviceSettings.innerHTML = "Connecting...";
                     DeviceInUse = deviceInUse;
                     break;
+                case "RolandV60HD":
+                    let Roland_IPAddress = document.getElementById("txtRolandIPAddress").value;
+                    ipc.send("UpdateStore-RolandV60HDSettings", Roland_IPAddress);
+                    ipc.send("UpdateStore-DeviceInUse", deviceInUse);
+                    btnUpdateDeviceSettings.style.backgroundColor = "#ffcc00";
+                    btnUpdateDeviceSettings.innerHTML = "Connecting...";
+                    DeviceInUse = deviceInUse;
+                    break;
                 default:
                     break;
             }
@@ -1340,6 +1375,7 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
             case "BlackmagicATEM":
             case "OBSStudio":
             case "BitfocusCompanion":
+            case "RolandV60HD":
                 assignTallyBoxDropDownValues(addressNumber, addressValue);       
                 break;
             default:
@@ -1486,6 +1522,10 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
         useSpecificTallyFieldAddressLabels("OBSStudio");
     });
     
+    ipc.on("OBSStudio_Authenticated", function (event, value) {
+        
+    });
+    
     ipc.on("Blink1s", function (event, devices, tallybox_blinks) {
        Blink1_Devices = devices;
        //need to redraw interface if this array length > 0
@@ -1625,6 +1665,7 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
         document.getElementById("divDeviceSettings_BlackmagicATEM").style.display = 'none';
         document.getElementById("divDeviceSettings_OBSStudio").style.display = 'none';
         document.getElementById("divDeviceSettings_BitfocusCompanion").style.display = 'none';
+        document.getElementById("divDeviceSettings_RolandV60HD").style.display = 'none';
         
         ddlDevices.selectedIndex = 0;
         for(let i = 0; i < ddlDevices.options.length; i++)
@@ -1681,6 +1722,11 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
                 ipc.send("LoadStore-BitfocusCompanionSettings");
                 useSpecificTallyFieldAddressLabels(deviceInUse);
                 break;
+            case "RolandV60HD":
+                document.getElementById("divDeviceSettings_RolandV60HD").style.display = 'inline';
+                ipc.send("LoadStore-RolandV60HDSettings");
+                useSpecificTallyFieldAddressLabels(deviceInUse);
+                break;
             default:
                 ddlDevices.selectedIndex = 0;
                 break;
@@ -1702,14 +1748,32 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
             
             let divDeviceStatus = document.getElementById("divDeviceStatus");
             
+            let port;
+            
             switch(DeviceInUse)
             {
                 case "RossCarbonite":
+                    port = document.getElementById("txtTSLListenPort").value;
+                    divDeviceStatus.innerHTML = "Listening for Ross Carbonite tally data on port: " + port;
+                    btnUpdateDeviceSettings.innerHTML = "Stop Listening";
+                    break;
                 case "RossCarboniteBlack":
+                    port = document.getElementById("txtTSLListenPort").value;
+                    divDeviceStatus.innerHTML = "Listening for Ross Carbonite Black tally data on port: " + port;                    
+                    btnUpdateDeviceSettings.innerHTML = "Stop Listening";
+                    break;
                 case "RossCarboniteBlackSolo":
+                    port = document.getElementById("txtTSLListenPort").value;
+                    divDeviceStatus.innerHTML = "Listening for Ross Carbonite Black Solo tally data on port: " + port; 
+                    btnUpdateDeviceSettings.innerHTML = "Stop Listening";
+                    break;
                 case "RossGraphite":
+                    port = document.getElementById("txtTSLListenPort").value;
+                    divDeviceStatus.innerHTML = "Listening for Ross Graphite tally data on port: " + port;
+                    btnUpdateDeviceSettings.innerHTML = "Stop Listening";
+                    break;
                 case "TSL3.1":
-                    let port = document.getElementById("txtTSLListenPort").value;
+                    port = document.getElementById("txtTSLListenPort").value;
                     divDeviceStatus.innerHTML = "Listening for data on port: " + port;
                     btnUpdateDeviceSettings.innerHTML = "Stop Listening";
                     break;
@@ -1746,7 +1810,12 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
                     divDeviceStatus.innerHTML = "Listening for Companion data";
                     btnUpdateDeviceSettings.innerHTML = "Stop Listening";
                     break;
+                case "RolandV60HD":
+                    divDeviceStatus.innerHTML = "Listening for Roland Smart Tally data";
+                    btnUpdateDeviceSettings.innerHTML = "Stop Listening";
+                    break;
                 default:
+                    alert(DeviceInUse);
                     break;
             } 
         }
@@ -1890,6 +1959,15 @@ let ddlATEMSwitchers = document.getElementById("ddlATEMSwitchers");
        }
     });
     
+    ipc.on("RolandV60HDSettings", function (event, ipaddress) {
+       let txtRolandIPAddress = document.getElementById("txtRolandIPAddress");
+       
+       if (ipaddress)
+       {
+           txtRolandIPAddress.value = ipaddress;
+       }
+    });
+    
     ipc.on('TallyArray', function (event, tallyArray) {
        TallyArray = tallyArray;
     });
@@ -2007,6 +2085,7 @@ function ValidateIPaddress(ipaddress)
                             <option value="BlackmagicATEM">Blackmagic ATEM</option>
                             <option value="OBSStudio">OBS Studio</option>
                             <option value="BitfocusCompanion">Bitfocus Companion</option>
+                            <option value="RolandV60HD">Roland V-60HD Smart Tally</option>
                         </select><br />
                         <div id="divDeviceSettings_RossCarbonite" style="display:none;">
                         </div>
@@ -2036,6 +2115,9 @@ function ValidateIPaddress(ipaddress)
                         </div>
                         <div id="divDeviceSettings_BitfocusCompanion" style="display:none;">
                             Companion Listen Port: <input type="text" id="txtBitfocusCompanionListenPort" size="5" /><br />
+                        </div>
+                        <div id="divDeviceSettings_RolandV60HD" style="display:none;">
+                            Roland IP Address: <input type="text" id="txtRolandIPAddress" size="15" /><br />
                         </div>
                     </div>
                     <div id="divDeviceStatus">

@@ -1,6 +1,6 @@
 {
     "name": "ProTally",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "description": "Provides on-screen viewing of tally data. User can monitor status of up to 4 inputs in preview or program.",
     "keywords": [
         "util",
@@ -20,7 +20,8 @@
         "obs",
         "bitfocus",
         "companion",
-        "blink1"
+        "blink1",
+        "roland"
     ],
     "license": "MIT",
     "author": "Joseph Adams",
@@ -32,16 +33,19 @@
         "node-blink1": "^0.2.3",
         "obs-websocket-js": "^1.2.0",
         "packet": "0.0.6",
+        "request": "^2.88.0",
         "tsl-umd": "^1.0.1"
     },
     "main": "main.js",
     "scripts": {
         "start": "electron .",
         "package-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=fixtures/icons/mac/icon.icns --prune=true --out=release-builds",
-        "package-win": "electron-packager . protally --overwrite --asar=false --platform=win32 --arch=ia32 --icon=fixtures/icons/win/icon.ico --prune=true --out=release-builds --version-string.CompanyName=JA --version-string.FileDescription=JA --version-string.ProductName=\"ProTally\"",
+        "package-win": "electron-packager . protally --overwrite --asar=false --platform=win32 --arch=x64 --icon=fixtures/icons/win/icon.ico --prune=true --out=release-builds --version-string.CompanyName=JA --version-string.FileDescription=JA --version-string.ProductName=\"ProTally\"",
         "package-linux": "electron-packager . protally --overwrite --asar=true --platform=linux --arch=x64 --icon=fixtures/icons/png/1024x1024.png --prune=true --out=release-builds"
     },
     "devDependencies": {
-        "electron": "^1.8.7"
+        "electron": "^4.1.0",
+        "electron-packager": "^13.1.1",
+        "electron-rebuild": "^1.8.4"
     }
 }
