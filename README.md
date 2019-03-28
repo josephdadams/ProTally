@@ -71,6 +71,13 @@ On your Tally server (ImageVideo TSI 4000, etc.), configure a client with these 
 * Enable the ProTally windows you want to be controllable from Companion, and position them where desired.
 * ProTally will listen for data from Companion to show a Preview, Program, or Preview/Program box. You can also send a "Beacon" from Companion which will flash a box with a custom color at a custom rate.
 
+### Using Roland V-60HD Smart Tally:
+* On your Roland device, make sure the IP address is set and the smart tally feature is enabled.
+* In ProTally, choose "Roland V-60HD Smart Tally" in the device list at the top of the settings menu.
+* Enter the IP Address of the Roland switcher.
+* Click "Connect".
+* ProTally can monitor any of the 8 input sources from the Roland switcher by continously polling the switcher for updates.
+
 ## Specifying Tally Addresses:
 
 * ProTally supports up to 4 Tally Windows.
