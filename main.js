@@ -1215,7 +1215,7 @@ function getRolandSmartTally(address)
 
 		request(`http://${ipAddress}/tally/${address}/status`, function (error, response, body) {
 			if (error) {
-				notify.log("Roland Smart Tally Error: " + error, false);
+				notify("Roland Smart Tally Error: " + error, false);
 			}
 			else {
 				processRolandV60HDTally(address, body);
