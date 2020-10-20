@@ -11,6 +11,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 It is not sold, authorized, or associated in any way with any other company or product. To contact the author or for more information, please visit <www.techministry.blog>.
 
+## SEE IT IN ACTION:
+Here is a walkthrough video made by Alex Hasker to show you what this software can do: https://www.youtube.com/watch?v=rF347qKqC9Y
+
 ## HOW TO USE THIS PROGRAM:
 Download the latest [release](https://github.com/josephdadams/ProTally/releases) from Github.
 Open the ProTally Settings menu.
