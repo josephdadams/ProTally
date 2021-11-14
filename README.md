@@ -1,3 +1,8 @@
+# PLEASE READ:
+Consider using my superior tally software, [Tally Arbiter](http://github.com/josephdadams/tallyarbiter). No further development is being done to ProTally.
+
+If you still want to use it, read on:
+
 # ProTally
 On-screen tally software for use with products like ProPresenter or ProVideoServer, enabling the operator to know when their source is visible on-air in a TSL 3.1 protocol environment, like a Ross Carbonite switcher. It also supports tally information from Blackmagic ATEM switchers, OBS Studio, Bitfocus Companion, and Roland switchers that support Smart Tally.
 
